@@ -20,5 +20,6 @@
   "bugs": {
     "url": "https://github.com/CottageLabs/notifyjs/issues"
   },
-  "homepage": "https://github.com/CottageLabs/notifyjs#readme"
+  "homepage": "https://github.com/CottageLabs/notifyjs#readme",
+  "type": "module"
 }
