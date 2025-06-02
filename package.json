@@ -1,0 +1,24 @@
+{
+  "name": "coarnotifyjs",
+  "version": "1.0.0",
+  "description": "This is an coarnotify js framework",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CottageLabs/notifyjs.git"
+  },
+  "keywords": [
+    "notifyjs",
+    "coarnotifyjs",
+    "coarnotify"
+  ],
+  "author": "Kushagra Varade",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/CottageLabs/notifyjs/issues"
+  },
+  "homepage": "https://github.com/CottageLabs/notifyjs#readme"
+}
