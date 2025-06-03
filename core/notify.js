@@ -2,171 +2,118 @@
  * This module is home to all the core model objects from which the notify patterns extend
  */
 
-import { ActivityStream, Properties, ActivityStreamsTypes, ACTIVITY_STREAMS_OBJECTS } from './activitystreams2.js';
-import { Validator } from './validate.js';
-import { ValidationError } from './exceptions.js';
+const { ActivityStream, Properties, ActivityStreamsTypes, ACTIVITY_STREAMS_OBJECTS } = require('./activitystreams2');
+const validate = require('../validate');
+const { ValidationError } = require('../exceptions');
+const { v4: uuidv4 } = require('uuid');
+const _ = require('lodash');
 
+const NOTIFY_NAMESPACE = "https://coar-notify.net";
 /**
  * Namespace for COAR Notify, to be used to construct namespaced properties used in COAR Notify Patterns
- * @constant {string}
  */
-export const NOTIFY_NAMESPACE = "https://coar-notify.net";
 
-/**
- * COAR Notify properties used in COAR Notify Patterns
- *
- * Most of these are provided as arrays, where the first element is the property name, and the second element is the namespace.
- * Some are provided as plain strings without namespaces
- *
- * These are suitable to be used as property names in all the property getters/setters in the notify pattern objects
- * and in the validation configuration.
- */
-export const NotifyProperties = {
-  /** ``inbox`` property */
+const NotifyProperties = {
   INBOX: ["inbox", NOTIFY_NAMESPACE],
-
-  /** ``ietf:cite-as`` property */
   CITE_AS: ["ietf:cite-as", NOTIFY_NAMESPACE],
-
-  /** ``ietf:item`` property */
   ITEM: ["ietf:item", NOTIFY_NAMESPACE],
-
-  /** ``name`` property */
   NAME: "name",
-
-  /** ``mediaType`` property */
-  MEDIA_TYPE: "mediaType"
+  MEDIA_TYPE: "mediaType",
 };
 
-/**
- * List of all the COAR Notify types patterns may use.
- *
- * These are in addition to the base Activity Streams types, which are in ActivityStreamsTypes
- */
-export const NotifyTypes = {
+const NotifyTypes = {
   ENDORSMENT_ACTION: "coar-notify:EndorsementAction",
   INGEST_ACTION: "coar-notify:IngestAction",
   RELATIONSHIP_ACTION: "coar-notify:RelationshipAction",
   REVIEW_ACTION: "coar-notify:ReviewAction",
   UNPROCESSABLE_NOTIFICATION: "coar-notify:UnprocessableNotification",
-
-  ABOUT_PAGE: "sorg:AboutPage"
+  ABOUT_PAGE: "sorg:AboutPage",
 };
 
-/**
- * Validation rules for properties
- * @type {Object}
- * @private
- */
 const _VALIDATION_RULES = {
   [Properties.ID]: {
-    default: Validator.absolute_uri,
+    default: validate.absolute_uri,
     context: {
-      [Properties.CONTEXT]: {
-        default: Validator.url
-      },
-      [Properties.ORIGIN]: {
-        default: Validator.url
-      },
-      [Properties.TARGET]: {
-        default: Validator.url
-      },
-      [NotifyProperties.ITEM]: {
-        default: Validator.url
-      }
-    }
+      [Properties.CONTEXT]: { default: validate.url },
+      [Properties.ORIGIN]: { default: validate.url },
+      [Properties.TARGET]: { default: validate.url },
+      [NotifyProperties.ITEM]: { default: validate.url },
+    },
   },
   [Properties.TYPE]: {
-    default: Validator.type_checker,
+    default: validate.type_checker,
     context: {
       [Properties.ACTOR]: {
-        default: Validator.one_of([
+        default: validate.one_of([
           ActivityStreamsTypes.SERVICE,
           ActivityStreamsTypes.APPLICATION,
           ActivityStreamsTypes.GROUP,
           ActivityStreamsTypes.ORGANIZATION,
-          ActivityStreamsTypes.PERSON
-        ])
+          ActivityStreamsTypes.PERSON,
+        ]),
       },
       [Properties.OBJECT]: {
-        default: Validator.at_least_one_of(ACTIVITY_STREAMS_OBJECTS)
+        default: validate.at_least_one_of(ACTIVITY_STREAMS_OBJECTS),
       },
       [Properties.CONTEXT]: {
-        default: Validator.at_least_one_of(ACTIVITY_STREAMS_OBJECTS)
+        default: validate.at_least_one_of(ACTIVITY_STREAMS_OBJECTS),
       },
       [NotifyProperties.ITEM]: {
-        default: Validator.at_least_one_of(ACTIVITY_STREAMS_OBJECTS)
-      }
-    }
+        default: validate.at_least_one_of(ACTIVITY_STREAMS_OBJECTS),
+      },
+    },
   },
-  [NotifyProperties.CITE_AS]: {
-    default: Validator.url
-  },
-  [NotifyProperties.INBOX]: {
-    default: Validator.url
-  },
-  [Properties.IN_REPLY_TO]: {
-    default: Validator.absolute_uri
-  },
-  [Properties.SUBJECT_TRIPLE]: {
-    default: Validator.absolute_uri
-  },
-  [Properties.OBJECT_TRIPLE]: {
-    default: Validator.absolute_uri
-  },
-  [Properties.RELATIONSHIP_TRIPLE]: {
-    default: Validator.absolute_uri
-  }
+  [NotifyProperties.CITE_AS]: { default: validate.url },
+  [NotifyProperties.INBOX]: { default: validate.url },
+  [Properties.IN_REPLY_TO]: { default: validate.absolute_uri },
+  [Properties.SUBJECT_TRIPLE]: { default: validate.absolute_uri },
+  [Properties.OBJECT_TRIPLE]: { default: validate.absolute_uri },
+  [Properties.RELATIONSHIP_TRIPLE]: { default: validate.absolute_uri },
 };
 
+const VALIDATORS = new validate.Validator(_VALIDATION_RULES);
 /**
  * Default Validator object for all pattern types
- * @type {Validator}
  */
-export const VALIDATORS = new Validator(_VALIDATION_RULES);
 
-/**
- * Base class from which all Notify objects extend.
- *
- * There are two kinds of Notify objects:
- *
- * 1. Patterns, which are the notifications themselves
- * 2. Pattern Parts, which are nested elements in the Patterns, such as objects, contexts, actors, etc
- *
- * This class forms the basis for both of those types, and provides essential services,
- * such as construction, accessors and validation, as well as supporting the essential
- * properties "id" and "type"
- */
-export class NotifyBase {
+class NotifyBase {
   /**
-   * Base constructor that all subclasses should call
-   * @param {ActivityStream|Object} [stream=null] The activity stream object, or a plain object from which one can be created
-   * @param {boolean} [validateStreamOnConstruct=true] Should the incoming stream be validated at construction-time
-   * @param {boolean} [validateProperties=true] Should individual properties be validated as they are set
-   * @param {Validator} [validators=null] The validator object for this class and all nested elements. If not provided will use the default VALIDATORS
-   * @param {string|Array<string>} [validationContext=null] The context in which this object is being validated. Used to determine which validators to use
-   * @param {boolean} [propertiesByReference=true] Should properties be get and set by reference (default) or by value
+   * Base class from which all Notify objects extend.
+   * @param {ActivityStream|Object} stream - The activity stream object, or a dict from which one can be created
+   * @param {boolean} validate_stream_on_construct - should the incoming stream be validated at construction-time
+   * @param {boolean} validate_properties - should individual properties be validated as they are set
+   * @param {Validator} validators - the validator object for this class and all nested elements
+   * @param {string|Array} validation_context - the context in which this object is being validated
+   * @param {boolean} properties_by_reference - should properties be get and set by reference (default true)
    */
-  constructor(stream = null, validateStreamOnConstruct = true, validateProperties = true, validators = null, validationContext = null, propertiesByReference = true) {
-    this._validateStreamOnConstruct = validateStreamOnConstruct;
-    this._validateProperties = validateProperties;
+  constructor({
+    stream = null,
+    validate_stream_on_construct = true,
+    validate_properties = true,
+    validators = null,
+    validation_context = null,
+    properties_by_reference = true,
+  } = {}) {
+    this._validate_stream_on_construct = validate_stream_on_construct;
+    this._validate_properties = validate_properties;
     this._validators = validators || VALIDATORS;
-    this._validationContext = validationContext;
-    this._propertiesByReference = propertiesByReference;
+    this._validation_context = validation_context;
+    this._properties_by_reference = properties_by_reference;
+
     let validateNow = false;
 
     if (stream === null) {
       this._stream = new ActivityStream();
-    } else if (typeof stream === 'object' && !(stream instanceof ActivityStream)) {
-      validateNow = validateStreamOnConstruct;
+    } else if (_.isPlainObject(stream)) {
+      validateNow = validate_stream_on_construct;
       this._stream = new ActivityStream(stream);
     } else {
-      validateNow = validateStreamOnConstruct;
+      validateNow = validate_stream_on_construct;
       this._stream = stream;
     }
 
-    if (!this._stream.getProperty(Properties.ID)) {
-      this._stream.setProperty(Properties.ID, "urn:uuid:" + crypto.randomUUID().replace(/-/g, ""));
+    if (!this._stream.get_property(Properties.ID)) {
+      this._stream.set_property(Properties.ID, "urn:uuid:" + uuidv4().replace(/-/g, ""));
     }
 
     if (validateNow) {
@@ -174,136 +121,85 @@ export class NotifyBase {
     }
   }
 
-  /** Are properties being validated on set */
-  get validateProperties() {
-    return this._validateProperties;
+  get validate_properties() {
+    return this._validate_properties;
   }
 
-  /** Is the stream validated on construction */
-  get validateStreamOnConstruct() {
-    return this._validateStreamOnConstruct;
+  get validate_stream_on_construct() {
+    return this._validate_stream_on_construct;
   }
 
-  /** The validator object for this instance */
   get validators() {
     return this._validators;
   }
 
-  /** The underlying ActivityStream object, excluding the JSON-LD @context */
   get doc() {
     return this._stream.doc;
   }
 
-  /** The ``id`` of the object */
   get id() {
-    return this.getProperty(Properties.ID);
+    return this.get_property(Properties.ID);
   }
 
   set id(value) {
-    this.setProperty(Properties.ID, value);
+    this.set_property(Properties.ID, value);
   }
 
-  /** The ``type`` of the object */
   get type() {
-    return this.getProperty(Properties.TYPE);
+    return this.get_property(Properties.TYPE);
   }
 
   set type(types) {
-    this.setProperty(Properties.TYPE, types);
+    this.set_property(Properties.TYPE, types);
   }
 
-  /**
-   * Generic property getter. It is strongly recommended that all accessors proxy for this function
-   * as this enforces by-reference/by-value accessing, and mediates directly with the underlying
-   * activity stream object.
-   * @param {string|Array<string>} propName The property to retrieve
-   * @param {boolean} [byReference=null] Whether to retrieve by_reference or by_value. If not supplied will default to the object-wide setting
-   * @returns {*} The property value
-   */
-  getProperty(propName, byReference = null) {
-    if (byReference === null) {
-      byReference = this._propertiesByReference;
+  get_property(prop_name, by_reference = null) {
+    if (by_reference === null) {
+      by_reference = this._properties_by_reference;
     }
-    const val = this._stream.getProperty(propName);
-    if (byReference) {
+    const val = this._stream.get_property(prop_name);
+    if (by_reference) {
       return val;
     } else {
-      // Deep clone using structuredClone if available, else fallback to JSON deep clone
-      if (typeof structuredClone === 'function') {
-        return structuredClone(val);
-      } else {
-        return JSON.parse(JSON.stringify(val));
-      }
+      return _.cloneDeep(val);
     }
   }
 
-  /**
-   * Generic property setter. It is strongly recommended that all accessors proxy for this function
-   * as this enforces by-reference/by-value accessing, and mediates directly with the underlying
-   * activity stream object.
-   * @param {string|Array<string>} propName The property to set
-   * @param {*} value The value to set
-   * @param {boolean} [byReference=null] Whether to set by_reference or by_value. If not supplied will default to the object-wide setting
-   */
-  setProperty(propName, value, byReference = null) {
-    if (byReference === null) {
-      byReference = this._propertiesByReference;
+  set_property(prop_name, value, by_reference = null) {
+    if (by_reference === null) {
+      by_reference = this._properties_by_reference;
     }
-    this.validateProperty(propName, value);
-    if (!byReference) {
-      if (typeof structuredClone === 'function') {
-        value = structuredClone(value);
-      } else {
-        value = JSON.parse(JSON.stringify(value));
-      }
+    this.validate_property(prop_name, value);
+    if (!by_reference) {
+      value = _.cloneDeep(value);
     }
-    this._stream.setProperty(propName, value);
+    this._stream.set_property(prop_name, value);
   }
 
-  /**
-   * Validate the object. This provides the basic validation on ``id`` and ``type``.
-   * Subclasses should override this method with their own validation, and call this method via ``super`` first to ensure
-   * the basic properties are validated.
-   * @returns {boolean} True or throws ValidationError if there are errors
-   * @throws {ValidationError}
-   */
   validate() {
     const ve = new ValidationError();
-
-    this.requiredAndValidate(ve, Properties.ID, this.id);
-    this.requiredAndValidate(ve, Properties.TYPE, this.type);
-
+    this.required_and_validate(ve, Properties.ID, this.id);
+    this.required_and_validate(ve, Properties.TYPE, this.type);
     if (ve.hasErrors()) {
       throw ve;
     }
     return true;
   }
 
-  /**
-   * Validate a single property. This is used internally by setProperty.
-   * If the object has validateProperties set to false then that behaviour may be overridden by setting forceValidate to true
-   * The validator applied to the property will be determined according to the validators property of the object
-   * and the validationContext of the object.
-   * @param {string|Array<string>} propName The property to validate
-   * @param {*} value The value to validate
-   * @param {boolean} [forceValidate=false] Whether to validate anyway, even if property validation is turned off at the object level
-   * @param {boolean} [raiseError=true] Raise an exception on validation failure, or return a tuple with the result
-   * @returns {[boolean, string]} A tuple of whether validation was successful, and the error message if it was not
-   */
-  validateProperty(propName, value, forceValidate = false, raiseError = true) {
+  validate_property(prop_name, value, force_validate = false, raise_error = true) {
     if (value === null || value === undefined) {
       return [true, ""];
     }
-    if (this.validateProperties || forceValidate) {
-      const validator = this.validators.get(propName, this._validationContext);
-      if (validator !== null && validator !== undefined) {
+    if (this.validate_properties || force_validate) {
+      const validator = this.validators.get(prop_name, this._validation_context);
+      if (validator !== null) {
         try {
           validator(this, value);
-        } catch (ve) {
-          if (raiseError) {
-            throw ve;
+        } catch (e) {
+          if (raise_error) {
+            throw e;
           } else {
-            return [false, ve.message];
+            return [false, e.message];
           }
         }
       }
@@ -311,120 +207,68 @@ export class NotifyBase {
     return [true, ""];
   }
 
-  /**
-   * Force validate the property and if an error is found, add it to the validation error
-   * @param {ValidationError} ve ValidationError instance
-   * @param {string|Array<string>} propName Property name
-   * @param {*} value Value to validate
-   * @private
-   */
-  _registerPropertyValidationError(ve, propName, value) {
-    const [e, msg] = this.validateProperty(propName, value, true, false);
-    if (!e) {
-      ve.addError(propName, msg);
+  _register_property_validation_error(ve, prop_name, value) {
+    const [valid, msg] = this.validate_property(prop_name, value, true, false);
+    if (!valid) {
+      ve.addError(prop_name, msg);
     }
   }
 
-  /**
-   * Add a required error to the validation error if the value is null or undefined
-   * @param {ValidationError} ve ValidationError instance
-   * @param {string|Array<string>} propName Property name
-   * @param {*} value Value to check
-   */
-  required(ve, propName, value) {
+  required(ve, prop_name, value) {
     if (value === null || value === undefined) {
-      const pn = Array.isArray(propName) ? propName[0] : propName;
-      ve.addError(propName, Validator.REQUIRED_MESSAGE.replace("{x}", pn));
+      const pn = Array.isArray(prop_name) ? prop_name[0] : prop_name;
+      ve.addError(prop_name, validate.REQUIRED_MESSAGE.replace("{x}", pn));
     }
   }
 
-  /**
-   * Add a required error to the validation error if the value is null or undefined, and then validate the value if not.
-   * Any error messages are added to the ValidationError object
-   * @param {ValidationError} ve ValidationError instance
-   * @param {string|Array<string>} propName Property name
-   * @param {*} value Value to check
-   */
-  requiredAndValidate(ve, propName, value) {
+  required_and_validate(ve, prop_name, value) {
     if (value === null || value === undefined) {
-      const pn = Array.isArray(propName) ? propName[0] : propName;
-      ve.addError(propName, Validator.REQUIRED_MESSAGE.replace("{x}", pn));
+      const pn = Array.isArray(prop_name) ? prop_name[0] : prop_name;
+      ve.addError(prop_name, validate.REQUIRED_MESSAGE.replace("{x}", pn));
     } else {
       if (value instanceof NotifyBase) {
         try {
           value.validate();
         } catch (subve) {
-          ve.addNestedErrors(propName, subve);
+          ve.addNestedErrors(prop_name, subve);
         }
       } else {
-        this._registerPropertyValidationError(ve, propName, value);
+        this._register_property_validation_error(ve, prop_name, value);
       }
     }
   }
 
-  /**
-   * Validate the value if it is not null or undefined, but do not raise a validation error if it is null or undefined
-   * @param {ValidationError} ve ValidationError instance
-   * @param {string|Array<string>} propName Property name
-   * @param {*} value Value to check
-   */
-  optionalAndValidate(ve, propName, value) {
+  optional_and_validate(ve, prop_name, value) {
     if (value !== null && value !== undefined) {
       if (value instanceof NotifyBase) {
         try {
           value.validate();
         } catch (subve) {
-          ve.addNestedErrors(propName, subve);
+          ve.addNestedErrors(prop_name, subve);
         }
       } else {
-        this._registerPropertyValidationError(ve, propName, value);
+        this._register_property_validation_error(ve, prop_name, value);
       }
     }
   }
 
-  /**
-   * Get the notification pattern as JSON-LD
-   * @returns {Object} JSON-LD representation of the pattern
-   */
-  toJsonld() {
-    return this._stream.toJsonld();
+  to_jsonld() {
+    return this._stream.to_jsonld();
   }
 }
 
-/**
- * Base class for all notification patterns
- */
-export class NotifyPattern extends NotifyBase {
-  /**
-   * The type of the pattern. This should be overridden by subclasses, otherwise defaults to "Object"
-   * @type {string}
-   */
+class NotifyPattern extends NotifyBase {
   static TYPE = ActivityStreamsTypes.OBJECT;
 
-  /**
-   * Constructor for the NotifyPattern
-   * This constructor will ensure that the pattern has its mandated type TYPE in the "type" property
-   * @param {ActivityStream|Object} [stream=null] The activity stream object, or a dict from which one can be created
-   * @param {boolean} [validateStreamOnConstruct=true] Should the incoming stream be validated at construction-time
-   * @param {boolean} [validateProperties=true] Should individual properties be validated as they are set
-   * @param {Validator} [validators=null] The validator object for this class and all nested elements. If not provided will use the default VALIDATORS
-   * @param {string|Array<string>} [validationContext=null] The context in which this object is being validated. Used to determine which validators to use
-   * @param {boolean} [propertiesByReference=true] Should properties be get and set by reference (default) or by value
-   */
-  constructor(stream = null, validateStreamOnConstruct = true, validateProperties = true, validators = null, validationContext = null, propertiesByReference = true) {
-    super(stream, validateStreamOnConstruct, validateProperties, validators, validationContext, propertiesByReference);
-    this._ensureTypeContains(this.constructor.TYPE);
+  constructor(options = {}) {
+    super(options);
+    this._ensure_type_contains(this.constructor.TYPE);
   }
 
-  /**
-   * Ensure that the type field contains the given types
-   * @param {string|Array<string>} types Types to ensure
-   * @private
-   */
-  _ensureTypeContains(types) {
-    let existing = this._stream.getProperty(Properties.TYPE);
+  _ensure_type_contains(types) {
+    let existing = this._stream.get_property(Properties.TYPE);
     if (existing === null || existing === undefined) {
-      this.setProperty(Properties.TYPE, types);
+      this.set_property(Properties.TYPE, types);
     } else {
       if (!Array.isArray(existing)) {
         existing = [existing];
@@ -440,107 +284,126 @@ export class NotifyPattern extends NotifyBase {
       if (existing.length === 1) {
         existing = existing[0];
       }
-      this.setProperty(Properties.TYPE, existing);
+      this.set_property(Properties.TYPE, existing);
     }
   }
 
-  /** Get the origin property of the notification */
   get origin() {
-    const o = this.getProperty(Properties.ORIGIN);
+    const o = this.get_property(Properties.ORIGIN);
     if (o !== null && o !== undefined) {
-      return new NotifyService(o, false, this.validateProperties, this.validators, Properties.ORIGIN, this._propertiesByReference);
+      return new NotifyService({
+        stream: o,
+        validate_stream_on_construct: false,
+        validate_properties: this.validate_properties,
+        validators: this.validators,
+        validation_context: Properties.ORIGIN,
+        properties_by_reference: this._properties_by_reference,
+      });
     }
     return null;
   }
 
   set origin(value) {
-    this.setProperty(Properties.ORIGIN, value.doc);
+    this.set_property(Properties.ORIGIN, value.doc);
   }
 
-  /** Get the target property of the notification */
   get target() {
-    const t = this.getProperty(Properties.TARGET);
+    const t = this.get_property(Properties.TARGET);
     if (t !== null && t !== undefined) {
-      return new NotifyService(t, false, this.validateProperties, this.validators, Properties.TARGET, this._propertiesByReference);
+      return new NotifyService({
+        stream: t,
+        validate_stream_on_construct: false,
+        validate_properties: this.validate_properties,
+        validators: this.validators,
+        validation_context: Properties.TARGET,
+        properties_by_reference: this._properties_by_reference,
+      });
     }
     return null;
   }
 
   set target(value) {
-    this.setProperty(Properties.TARGET, value.doc);
+    this.set_property(Properties.TARGET, value.doc);
   }
 
-  /** Get the object property of the notification */
   get object() {
-    const o = this.getProperty(Properties.OBJECT);
+    const o = this.get_property(Properties.OBJECT);
     if (o !== null && o !== undefined) {
-      return new NotifyObject(o, false, this.validateProperties, this.validators, Properties.OBJECT, this._propertiesByReference);
+      return new NotifyObject({
+        stream: o,
+        validate_stream_on_construct: false,
+        validate_properties: this.validate_properties,
+        validators: this.validators,
+        validation_context: Properties.OBJECT,
+        properties_by_reference: this._properties_by_reference,
+      });
     }
     return null;
   }
 
   set object(value) {
-    this.setProperty(Properties.OBJECT, value.doc);
+    this.set_property(Properties.OBJECT, value.doc);
   }
 
-  /** Get the inReplyTo property of the notification */
-  get inReplyTo() {
-    return this.getProperty(Properties.IN_REPLY_TO);
+  get in_reply_to() {
+    return this.get_property(Properties.IN_REPLY_TO);
   }
 
-  set inReplyTo(value) {
-    this.setProperty(Properties.IN_REPLY_TO, value);
+  set in_reply_to(value) {
+    this.set_property(Properties.IN_REPLY_TO, value);
   }
 
-  /** Get the actor property of the notification */
   get actor() {
-    const a = this.getProperty(Properties.ACTOR);
+    const a = this.get_property(Properties.ACTOR);
     if (a !== null && a !== undefined) {
-      return new NotifyActor(a, false, this.validateProperties, this.validators, Properties.ACTOR, this._propertiesByReference);
+      return new NotifyActor({
+        stream: a,
+        validate_stream_on_construct: false,
+        validate_properties: this.validate_properties,
+        validators: this.validators,
+        validation_context: Properties.ACTOR,
+        properties_by_reference: this._properties_by_reference,
+      });
     }
     return null;
   }
 
   set actor(value) {
-    this.setProperty(Properties.ACTOR, value.doc);
+    this.set_property(Properties.ACTOR, value.doc);
   }
 
-  /** Get the context property of the notification */
   get context() {
-    const c = this.getProperty(Properties.CONTEXT);
+    const c = this.get_property(Properties.CONTEXT);
     if (c !== null && c !== undefined) {
-      return new NotifyObject(c, false, this.validateProperties, this.validators, Properties.CONTEXT, this._propertiesByReference);
+      return new NotifyObject({
+        stream: c,
+        validate_stream_on_construct: false,
+        validate_properties: this.validate_properties,
+        validators: this.validators,
+        validation_context: Properties.CONTEXT,
+        properties_by_reference: this._properties_by_reference,
+      });
     }
     return null;
   }
 
   set context(value) {
-    this.setProperty(Properties.CONTEXT, value.doc);
+    this.set_property(Properties.CONTEXT, value.doc);
   }
 
-  /**
-   * Base validator for all notification patterns. This extends the validate function on the superclass.
-   * In addition to the base class's constraints, this applies the following validation:
-   * - The origin, target and object properties are required and must be valid
-   * - The actor, inReplyTo and context properties are optional, but if present must be valid
-   * @returns {boolean} True if valid, otherwise throws ValidationError
-   * @throws {ValidationError}
-   */
   validate() {
     const ve = new ValidationError();
     try {
       super.validate();
     } catch (superve) {
-      ve.addNestedErrors(null, superve);
+      Object.assign(ve, superve);
     }
-
-    this.requiredAndValidate(ve, Properties.ORIGIN, this.origin);
-    this.requiredAndValidate(ve, Properties.TARGET, this.target);
-    this.requiredAndValidate(ve, Properties.OBJECT, this.object);
-    this.optionalAndValidate(ve, Properties.ACTOR, this.actor);
-    this.optionalAndValidate(ve, Properties.IN_REPLY_TO, this.inReplyTo);
-    this.optionalAndValidate(ve, Properties.CONTEXT, this.context);
-
+    this.required_and_validate(ve, Properties.ORIGIN, this.origin);
+    this.required_and_validate(ve, Properties.TARGET, this.target);
+    this.required_and_validate(ve, Properties.OBJECT, this.object);
+    this.optional_and_validate(ve, Properties.ACTOR, this.actor);
+    this.optional_and_validate(ve, Properties.IN_REPLY_TO, this.in_reply_to);
+    this.optional_and_validate(ve, Properties.CONTEXT, this.context);
     if (ve.hasErrors()) {
       throw ve;
     }
@@ -548,50 +411,21 @@ export class NotifyPattern extends NotifyBase {
   }
 }
 
-/**
- * Base class for all pattern parts, such as objects, contexts, actors, etc
- *
- * If there is a default type specified, and a type is not given at construction, then
- * the default type will be added
- */
-export class NotifyPatternPart extends NotifyBase {
-  /**
-   * The default type for this object, if none is provided on construction. If not provided, then no default type will be set
-   * @type {string|null}
-   */
+class NotifyPatternPart extends NotifyBase {
   static DEFAULT_TYPE = null;
-
-  /**
-   * The list of types that are permissible for this object. If the list is empty, then any type is allowed
-   * @type {Array<string>}
-   */
   static ALLOWED_TYPES = [];
 
-  /**
-   * Constructor for the NotifyPatternPart
-   * @param {ActivityStream|Object} [stream=null] The activity stream object, or a dict from which one can be created
-   * @param {boolean} [validateStreamOnConstruct=true] Should the incoming stream be validated at construction-time
-   * @param {boolean} [validateProperties=true] Should individual properties be validated as they are set
-   * @param {Validator} [validators=null] The validator object for this class and all nested elements. If not provided will use the default VALIDATORS
-   * @param {string|Array<string>} [validationContext=null] The context in which this object is being validated. Used to determine which validators to use
-   * @param {boolean} [propertiesByReference=true] Should properties be get and set by reference (default) or by value
-   */
-  constructor(stream = null, validateStreamOnConstruct = true, validateProperties = true, validators = null, validationContext = null, propertiesByReference = true) {
-    super(stream, validateStreamOnConstruct, validateProperties, validators, validationContext, propertiesByReference);
+  constructor(options = {}) {
+    super(options);
     if (this.constructor.DEFAULT_TYPE !== null && (this.type === null || this.type === undefined)) {
       this.type = this.constructor.DEFAULT_TYPE;
     }
   }
 
-  /**
-   * Set the type of the object, and validate that it is one of the allowed types if present
-   * @param {string|Array<string>} types The type(s) to set
-   */
   set type(types) {
     if (!Array.isArray(types)) {
       types = [types];
     }
-
     if (this.constructor.ALLOWED_TYPES.length > 0) {
       for (const t of types) {
         if (!this.constructor.ALLOWED_TYPES.includes(t)) {
@@ -599,95 +433,70 @@ export class NotifyPatternPart extends NotifyBase {
         }
       }
     }
-
-    // keep single values as single values, not arrays
     if (types.length === 1) {
       types = types[0];
     }
-
-    this.setProperty(Properties.TYPE, types);
+    this.set_property(Properties.TYPE, types);
   }
 }
 
-/**
- * Default class to represent a service in the COAR Notify pattern.
- *
- * Services are used to represent "origin" and "target" properties in the notification patterns
- *
- * Specific patterns may need to extend this class to provide their specific behaviours and validation
- */
-export class NotifyService extends NotifyPatternPart {
-  /**
-   * The default type for a service is "Service", but the type can be set to any value
-   * @type {string}
-   */
+class NotifyService extends NotifyPatternPart {
   static DEFAULT_TYPE = ActivityStreamsTypes.SERVICE;
 
-  /** Get the "inbox" property of the service */
   get inbox() {
-    return this.getProperty(NotifyProperties.INBOX);
+    return this.get_property(NotifyProperties.INBOX);
   }
 
   set inbox(value) {
-    this.setProperty(NotifyProperties.INBOX, value);
+    this.set_property(NotifyProperties.INBOX, value);
   }
 }
 
-/**
- * Default class to represent an object in the COAR Notify pattern.
- * Objects can be used for "object" or "context" properties in notify patterns
- *
- * Specific patterns may need to extend this class to provide their specific behaviours and validation
- */
-export class NotifyObject extends NotifyPatternPart {
-  /** Get the "ietf:cite-as" property of the object */
-  get citeAs() {
-    return this.getProperty(NotifyProperties.CITE_AS);
+class NotifyObject extends NotifyPatternPart {
+  get cite_as() {
+    return this.get_property(NotifyProperties.CITE_AS);
   }
 
-  set citeAs(value) {
-    this.setProperty(NotifyProperties.CITE_AS, value);
+  set cite_as(value) {
+    this.set_property(NotifyProperties.CITE_AS, value);
   }
 
-  /** Get the "ietf:item" property of the object */
   get item() {
-    const i = this.getProperty(NotifyProperties.ITEM);
+    const i = this.get_property(NotifyProperties.ITEM);
     if (i !== null && i !== undefined) {
-      return new NotifyItem(i, false, this.validateProperties, this.validators, NotifyProperties.ITEM, this._propertiesByReference);
+      return new NotifyItem({
+        stream: i,
+        validate_stream_on_construct: false,
+        validate_properties: this.validate_properties,
+        validators: this.validators,
+        validation_context: NotifyProperties.ITEM,
+        properties_by_reference: this._properties_by_reference,
+      });
     }
     return null;
   }
 
   set item(value) {
-    this.setProperty(NotifyProperties.ITEM, value);
+    this.set_property(NotifyProperties.ITEM, value);
   }
 
-  /** Get object, relationship and subject properties as a relationship triple */
   get triple() {
-    const obj = this.getProperty(Properties.OBJECT_TRIPLE);
-    const rel = this.getProperty(Properties.RELATIONSHIP_TRIPLE);
-    const subj = this.getProperty(Properties.SUBJECT_TRIPLE);
+    const obj = this.get_property(Properties.OBJECT_TRIPLE);
+    const rel = this.get_property(Properties.RELATIONSHIP_TRIPLE);
+    const subj = this.get_property(Properties.SUBJECT_TRIPLE);
     return [obj, rel, subj];
   }
 
   set triple(value) {
     const [obj, rel, subj] = value;
-    this.setProperty(Properties.OBJECT_TRIPLE, obj);
-    this.setProperty(Properties.RELATIONSHIP_TRIPLE, rel);
-    this.setProperty(Properties.SUBJECT_TRIPLE, subj);
+    this.set_property(Properties.OBJECT_TRIPLE, obj);
+    this.set_property(Properties.RELATIONSHIP_TRIPLE, rel);
+    this.set_property(Properties.SUBJECT_TRIPLE, subj);
   }
 
-  /**
-   * Validate the object. This overrides the base validation, as objects only absolutely require an "id" property,
-   * so the base requirement for a "type" is relaxed.
-   * @returns {boolean} True if valid, otherwise throws ValidationError
-   * @throws {ValidationError}
-   */
   validate() {
     const ve = new ValidationError();
-
-    this.requiredAndValidate(ve, Properties.ID, this.id);
-
+    this.required_and_validate(ve, Properties.ID, this.id);
     if (ve.hasErrors()) {
       throw ve;
     }
@@ -695,68 +504,37 @@ export class NotifyObject extends NotifyPatternPart {
   }
 }
 
-/**
- * Default class to represents an actor in the COAR Notify pattern.
- * Actors are used to represent the "actor" property in the notification patterns
- *
- * Specific patterns may need to extend this class to provide their specific behaviours and validation
- */
-export class NotifyActor extends NotifyPatternPart {
-  /**
-   * Default type is "Service", but can also be set as any one of the other allowed types
-   * @type {string}
-   */
+class NotifyActor extends NotifyPatternPart {
   static DEFAULT_TYPE = ActivityStreamsTypes.SERVICE;
-
-  /**
-   * The allowed types for an actor: "Service", "Application", "Group", "Organisation", "Person"
-   * @type {Array<string>}
-   */
   static ALLOWED_TYPES = [
     NotifyActor.DEFAULT_TYPE,
     ActivityStreamsTypes.APPLICATION,
     ActivityStreamsTypes.GROUP,
     ActivityStreamsTypes.ORGANIZATION,
-    ActivityStreamsTypes.PERSON
+    ActivityStreamsTypes.PERSON,
   ];
 
-  /** Get the name property of the actor */
   get name() {
-    return this.getProperty(NotifyProperties.NAME);
+    return this.get_property(NotifyProperties.NAME);
   }
 
   set name(value) {
-    this.setProperty(NotifyProperties.NAME, value);
+    this.set_property(NotifyProperties.NAME, value);
   }
 }
 
-/**
- * Default class to represent an item in the COAR Notify pattern.
- * Items are used to represent the "ietf:item" property in the notification patterns
- *
- * Specific patterns may need to extend this class to provide their specific behaviours and validation
- */
-export class NotifyItem extends NotifyPatternPart {
-  /** Get the "mediaType" property of the item */
-  get mediaType() {
-    return this.getProperty(NotifyProperties.MEDIA_TYPE);
+class NotifyItem extends NotifyPatternPart {
+  get media_type() {
+    return this.get_property(NotifyProperties.MEDIA_TYPE);
   }
 
-  set mediaType(value) {
-    this.setProperty(NotifyProperties.MEDIA_TYPE, value);
+  set media_type(value) {
+    this.set_property(NotifyProperties.MEDIA_TYPE, value);
   }
 
-  /**
-   * Validate the item. This overrides the base validation, as objects only absolutely require an "id" property,
-   * so the base requirement for a "type" is relaxed.
-   * @returns {boolean} True if valid, otherwise throws ValidationError
-   * @throws {ValidationError}
-   */
   validate() {
     const ve = new ValidationError();
-
-    this.requiredAndValidate(ve, Properties.ID, this.id);
-
+    this.required_and_validate(ve, Properties.ID, this.id);
     if (ve.hasErrors()) {
       throw ve;
     }
@@ -765,64 +543,61 @@ export class NotifyItem extends NotifyPatternPart {
 }
 
 /**
- * A mixin to add to a pattern which can override the default object property to return a full
- * nested pattern from the "object" property, rather than the default NotifyObject
- *
- * This mixin needs to be first on the inheritance list, as it overrides the object property
- * of the NotifyPattern class.
- *
- * For example:
- *
- * class MySpecialPattern extends NestedPatternObjectMixin(NotifyPattern) {
- *   // ...
- * }
+ * Mixins
  */
-export const NestedPatternObjectMixin = (Base) => class extends Base {
-  /** Retrieve an object as its correctly typed pattern, falling back to a default NotifyObject if no pattern matches */
+
+class NestedPatternObjectMixin {
   get object() {
-    const o = this.getProperty(Properties.OBJECT);
+    const o = this.get_property(Properties.OBJECT);
     if (o !== null && o !== undefined) {
-      // Late import to avoid circular dependency
-      // Assuming COARNotifyFactory is imported from './factory.js'
-      import('./factory.js').then(({ COARNotifyFactory }) => {
-        const nested = COARNotifyFactory.getByObject(
-          structuredClone(o),
-          false,
-          this.validateProperties,
-          this.validators,
-          null
-        );
-        if (nested !== null) {
-          return nested;
-        }
+      const COARNotifyFactory = require('../factory').COARNotifyFactory;
+      const nested = COARNotifyFactory.get_by_object(_.cloneDeep(o), {
+        validate_stream_on_construct: false,
+        validate_properties: this.validate_properties,
+        validators: this.validators,
+        validation_context: null,
       });
-      // If unable to construct the typed nested object, just return a generic object
-      return new NotifyObject(
-        structuredClone(o),
-        false,
-        this.validateProperties,
-        this.validators,
-        Properties.OBJECT
-      );
+      if (nested !== null) {
+        return nested;
+      }
+      return new NotifyObject({
+        stream: _.cloneDeep(o),
+        validate_stream_on_construct: false,
+        validate_properties: this.validate_properties,
+        validators: this.validators,
+        validation_context: Properties.OBJECT,
+      });
     }
     return null;
   }
 
   set object(value) {
-    this.setProperty(Properties.OBJECT, value.doc);
+    this.set_property(Properties.OBJECT, value.doc);
   }
-};
+}
 
-/**
- * Mixin to provide an API for setting and getting the "summary" property of a pattern
- */
-export const SummaryMixin = (Base) => class extends Base {
-  /** The summary property of the pattern */
+class SummaryMixin {
   get summary() {
-    return this.getProperty(Properties.SUMMARY);
+    return this.get_property(Properties.SUMMARY);
   }
 
   set summary(summary) {
-    this.setProperty(Properties.SUMMARY, summary);
+    this.set_property(Properties.SUMMARY, summary);
   }
+}
+
+module.exports = {
+  NOTIFY_NAMESPACE,
+  NotifyProperties,
+  NotifyTypes,
+  VALIDATORS,
+  NotifyBase,
+  NotifyPattern,
+  NotifyPatternPart,
+  NotifyService,
+  NotifyObject,
+  NotifyActor,
+  NotifyItem,
+  NestedPatternObjectMixin,
+  SummaryMixin,
 };

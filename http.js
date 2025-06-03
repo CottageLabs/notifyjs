@@ -2,147 +2,112 @@
  * HTTP layer interface and default implementation using fetch API
  */
 
-/**
- * Interface for the HTTP layer
- *
- * This defines the methods which need to be implemented in order for the client to fully operate
- */
-export class HttpLayer {
+class HttpLayer {
   /**
    * Make an HTTP POST request to the supplied URL with the given body data, and headers
-   *
-   * @param {string} url The request URL
-   * @param {string} data The body data
-   * @param {Object} [headers={}] HTTP headers as a dict to include in the request
-   * @param  {...any} args Additional arguments
-   * @returns {Promise<HttpResponse>}
+   * @param {string} url - the request URL
+   * @param {string} data - the body data
+   * @param {Object} headers - HTTP headers as an object to include in the request
+   * @param  {...any} args - additional implementation-specific parameters
+   * @returns {HttpResponse}
    */
-  async post(url, data, headers = {}, ...args) {
-    throw new Error("Not implemented");
+  post(url, data, headers = {}, ...args) {
+    throw new Error('NotImplementedError');
   }
 
   /**
    * Make an HTTP GET request to the supplied URL with the given headers
-   *
-   * @param {string} url The request URL
-   * @param {Object} [headers={}] HTTP headers as a dict to include in the request
-   * @param  {...any} args Additional arguments
-   * @returns {Promise<HttpResponse>}
+   * @param {string} url - the request URL
+   * @param {Object} headers - HTTP headers as an object to include in the request
+   * @param  {...any} args - additional implementation-specific parameters
+   * @returns {HttpResponse}
    */
-  async get(url, headers = {}, ...args) {
-    throw new Error("Not implemented");
+  get(url, headers = {}, ...args) {
+    throw new Error('NotImplementedError');
   }
 }
 
-/**
- * Interface for the HTTP response object
- *
- * This defines the methods which need to be implemented in order for the client to fully operate
- */
-export class HttpResponse {
+class HttpResponse {
   /**
    * Get the value of a header from the response
-   *
-   * @param {string} headerName The name of the header
-   * @returns {string|null}
+   * @param {string} header_name - the name of the header
+   * @returns {string}
    */
-  header(headerName) {
-    throw new Error("Not implemented");
+  header(header_name) {
+    throw new Error('NotImplementedError');
   }
 
   /**
    * Get the status code of the response
-   *
    * @returns {number}
    */
-  get statusCode() {
-    throw new Error("Not implemented");
+  get status_code() {
+    throw new Error('NotImplementedError');
   }
 }
 
-/**
- * Implementation of the HTTP layer using the fetch API. This is the default implementation
- * used when no other implementation is supplied
- */
-export class RequestsHttpLayer extends HttpLayer {
+class RequestsHttpResponse extends HttpResponse {
   /**
-   * Make an HTTP POST request to the supplied URL with the given body data, and headers
-   *
-   * @param {string} url The request URL
-   * @param {string} data The body data
-   * @param {Object} [headers={}] HTTP headers as a dict to include in the request
-   * @param  {...any} args Additional arguments (ignored)
-   * @returns {Promise<RequestsHttpResponse>}
+   * Wraps the fetch Response object
+   * @param {Response} resp - fetch Response object
    */
-  async post(url, data, headers = {}, ...args) {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: headers,
-      body: data,
-      ...args,
-    });
-    return new RequestsHttpResponse(response);
-  }
-
-  /**
-   * Make an HTTP GET request to the supplied URL with the given headers
-   *
-   * @param {string} url The request URL
-   * @param {Object} [headers={}] HTTP headers as a dict to include in the request
-   * @param  {...any} args Additional arguments (ignored)
-   * @returns {Promise<RequestsHttpResponse>}
-   */
-  async get(url, headers = {}, ...args) {
-    const response = await fetch(url, {
-      method: "GET",
-      headers: headers,
-      ...args,
-    });
-    return new RequestsHttpResponse(response);
-  }
-}
-
-/**
- * Implementation of the HTTP response object using the fetch API Response object
- *
- * This wraps the fetch Response object and provides the interface required by the client
- */
-export class RequestsHttpResponse extends HttpResponse {
-  /**
-   * Construct the object as a wrapper around the original fetch Response object
-   *
-   * @param {Response} response The fetch Response object
-   */
-  constructor(response) {
+  constructor(resp) {
     super();
-    this._response = response;
+    this._resp = resp;
   }
 
-  /**
-   * Get the value of a header from the response
-   *
-   * @param {string} headerName The name of the header
-   * @returns {string|null}
-   */
-  header(headerName) {
-    return this._response.headers.get(headerName);
+  header(header_name) {
+    return this._resp.headers.get(header_name);
   }
 
-  /**
-   * Get the status code of the response
-   *
-   * @returns {number}
-   */
-  get statusCode() {
-    return this._response.status;
+  get status_code() {
+    return this._resp.status;
   }
 
-  /**
-   * Get the original fetch Response object
-   *
-   * @returns {Response}
-   */
-  get fetchResponse() {
-    return this._response;
+  get fetch_response() {
+    return this._resp;
   }
 }
+
+class RequestsHttpLayer extends HttpLayer {
+  /**
+   * Make an HTTP POST request using fetch
+   * @param {string} url
+   * @param {string} data
+   * @param {Object} headers
+   * @param  {...any} args
+   * @returns {Promise<RequestsHttpResponse>}
+   */
+  async post(url, data, headers = {}, ...args) {
+    const resp = await fetch(url, {
+      method: 'POST',
+      body: data,
+      headers: headers,
+      ...args,
+    });
+    return new RequestsHttpResponse(resp);
+  }
+
+  /**
+   * Make an HTTP GET request using fetch
+   * @param {string} url
+   * @param {Object} headers
+   * @param  {...any} args
+   * @returns {Promise<RequestsHttpResponse>}
+   */
+  async get(url, headers = {}, ...args) {
+    const resp = await fetch(url, {
+      method: 'GET',
+      headers: headers,
+      ...args,
+    });
+    return new RequestsHttpResponse(resp);
+  }
+}
+
+module.exports = {
+  HttpLayer,
+  HttpResponse,
+  RequestsHttpLayer,
+  RequestsHttpResponse,
+};
