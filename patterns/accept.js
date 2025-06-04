@@ -3,11 +3,11 @@
  * https://coar-notify.net/specification/1.0.0/accept/
  */
 
-const { NotifyPattern, NestedPatternObjectMixin } = require('../core/notify');
-const { ActivityStreamsTypes, Properties } = require('../core/activitystreams2');
-const { ValidationError } = require('../exceptions');
+import { NotifyPattern, NestedPatternObjectMixin } from '../core/notify.js';
+import { ActivityStreamsTypes, Properties } from '../core/activitystreams2.js';
+import { ValidationError } from '../exceptions.js';
 
-class Accept extends NestedPatternObjectMixin(NotifyPattern) {
+export class Accept extends NestedPatternObjectMixin(NotifyPattern) {
   static TYPE = ActivityStreamsTypes.ACCEPT;
 
   constructor(options = {}) {
@@ -39,7 +39,3 @@ class Accept extends NestedPatternObjectMixin(NotifyPattern) {
     return true;
   }
 }
-
-module.exports = {
-  Accept,
-};

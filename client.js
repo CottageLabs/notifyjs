@@ -1,8 +1,8 @@
-const { NotifyException } = require('./exceptions');
-const { RequestsHttpLayer } = require('./http');
-const { NotifyPattern } = require('./core/notify');
+import { NotifyException } from './exceptions.js';
+import { RequestsHttpLayer } from './http.js';
+import { NotifyPattern } from './core/notify.js';
 
-class NotifyResponse {
+export class NotifyResponse {
   /**
    * An object representing the response from a COAR Notify inbox.
    *
@@ -41,7 +41,7 @@ class NotifyResponse {
   }
 }
 
-class COARNotifyClient {
+export class COARNotifyClient {
   /**
    * The COAR Notify Client, which is the mechanism through which you will interact with external inboxes.
    *
@@ -111,8 +111,3 @@ class COARNotifyClient {
     throw new NotifyException(`Unexpected response: ${resp.status_code}`);
   }
 }
-
-module.exports = {
-  NotifyResponse,
-  COARNotifyClient,
-};

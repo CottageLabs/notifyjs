@@ -2,18 +2,18 @@
  * This module is home to all the core model objects from which the notify patterns extend
  */
 
-const { ActivityStream, Properties, ActivityStreamsTypes, ACTIVITY_STREAMS_OBJECTS } = require('./activitystreams2');
-const validate = require('../validate');
-const { ValidationError } = require('../exceptions');
-const { v4: uuidv4 } = require('uuid');
-const _ = require('lodash');
+import { ActivityStream, Properties, ActivityStreamsTypes, ACTIVITY_STREAMS_OBJECTS } from './activitystreams2.js';
+import validate from '../validate.js';
+import { ValidationError } from '../exceptions.js';
+import { v4 as uuidv4 } from 'uuid';
+import _ from 'lodash';
 
-const NOTIFY_NAMESPACE = "https://coar-notify.net";
+export const NOTIFY_NAMESPACE = "https://coar-notify.net";
 /**
  * Namespace for COAR Notify, to be used to construct namespaced properties used in COAR Notify Patterns
  */
 
-const NotifyProperties = {
+export const NotifyProperties = {
   INBOX: ["inbox", NOTIFY_NAMESPACE],
   CITE_AS: ["ietf:cite-as", NOTIFY_NAMESPACE],
   ITEM: ["ietf:item", NOTIFY_NAMESPACE],
@@ -21,7 +21,7 @@ const NotifyProperties = {
   MEDIA_TYPE: "mediaType",
 };
 
-const NotifyTypes = {
+export const NotifyTypes = {
   ENDORSMENT_ACTION: "coar-notify:EndorsementAction",
   INGEST_ACTION: "coar-notify:IngestAction",
   RELATIONSHIP_ACTION: "coar-notify:RelationshipAction",
@@ -71,12 +71,12 @@ const _VALIDATION_RULES = {
   [Properties.RELATIONSHIP_TRIPLE]: { default: validate.absolute_uri },
 };
 
-const VALIDATORS = new validate.Validator(_VALIDATION_RULES);
+export const VALIDATORS = new validate.Validator(_VALIDATION_RULES);
 /**
  * Default Validator object for all pattern types
  */
 
-class NotifyBase {
+export class NotifyBase {
   /**
    * Base class from which all Notify objects extend.
    * @param {ActivityStream|Object} stream - The activity stream object, or a dict from which one can be created
@@ -257,7 +257,7 @@ class NotifyBase {
   }
 }
 
-class NotifyPattern extends NotifyBase {
+export class NotifyPattern extends NotifyBase {
   static TYPE = ActivityStreamsTypes.OBJECT;
 
   constructor(options = {}) {
@@ -411,7 +411,7 @@ class NotifyPattern extends NotifyBase {
   }
 }
 
-class NotifyPatternPart extends NotifyBase {
+export class NotifyPatternPart extends NotifyBase {
   static DEFAULT_TYPE = null;
   static ALLOWED_TYPES = [];
 
@@ -440,7 +440,7 @@ class NotifyPatternPart extends NotifyBase {
   }
 }
 
-class NotifyService extends NotifyPatternPart {
+export class NotifyService extends NotifyPatternPart {
   static DEFAULT_TYPE = ActivityStreamsTypes.SERVICE;
 
   get inbox() {
@@ -452,7 +452,7 @@ class NotifyService extends NotifyPatternPart {
   }
 }
 
-class NotifyObject extends NotifyPatternPart {
+export class NotifyObject extends NotifyPatternPart {
   get cite_as() {
     return this.get_property(NotifyProperties.CITE_AS);
   }
@@ -504,7 +504,7 @@ class NotifyObject extends NotifyPatternPart {
   }
 }
 
-class NotifyActor extends NotifyPatternPart {
+export class NotifyActor extends NotifyPatternPart {
   static DEFAULT_TYPE = ActivityStreamsTypes.SERVICE;
   static ALLOWED_TYPES = [
     NotifyActor.DEFAULT_TYPE,
@@ -523,7 +523,7 @@ class NotifyActor extends NotifyPatternPart {
   }
 }
 
-class NotifyItem extends NotifyPatternPart {
+export class NotifyItem extends NotifyPatternPart {
   get media_type() {
     return this.get_property(NotifyProperties.MEDIA_TYPE);
   }
@@ -546,11 +546,11 @@ class NotifyItem extends NotifyPatternPart {
  * Mixins
  */
 
-class NestedPatternObjectMixin {
+export class NestedPatternObjectMixin {
   get object() {
     const o = this.get_property(Properties.OBJECT);
     if (o !== null && o !== undefined) {
-      const COARNotifyFactory = require('../factory').COARNotifyFactory;
+      const { COARNotifyFactory } = await import('../factory.js');
       const nested = COARNotifyFactory.get_by_object(_.cloneDeep(o), {
         validate_stream_on_construct: false,
         validate_properties: this.validate_properties,
@@ -576,7 +576,7 @@ class NestedPatternObjectMixin {
   }
 }
 
-class SummaryMixin {
+export class SummaryMixin {
   get summary() {
     return this.get_property(Properties.SUMMARY);
   }
@@ -584,20 +584,3 @@ class SummaryMixin {
   set summary(summary) {
     this.set_property(Properties.SUMMARY, summary);
   }
-}
-
-module.exports = {
-  NOTIFY_NAMESPACE,
-  NotifyProperties,
-  NotifyTypes,
-  VALIDATORS,
-  NotifyBase,
-  NotifyPattern,
-  NotifyPatternPart,
-  NotifyService,
-  NotifyObject,
-  NotifyActor,
-  NotifyItem,
-  NestedPatternObjectMixin,
-  SummaryMixin,
-};

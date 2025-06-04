@@ -12,7 +12,7 @@
 /**
  * Namespace for Activity Streams, to be used to construct namespaced properties used in COAR Notify Patterns
  */
-const ACTIVITY_STREAMS_NAMESPACE = "https://www.w3.org/ns/activitystreams";
+export const ACTIVITY_STREAMS_NAMESPACE = "https://www.w3.org/ns/activitystreams";
 
 /**
  * ActivityStreams 2.0 properties used in COAR Notify Patterns
@@ -22,7 +22,7 @@ const ACTIVITY_STREAMS_NAMESPACE = "https://www.w3.org/ns/activitystreams";
  * These are suitable to be used as property names in all the property getters/setters in the notify pattern objects
  * and in the validation configuration.
  */
-const Properties = {
+export const Properties = {
   ID: ["id", ACTIVITY_STREAMS_NAMESPACE],
   TYPE: ["type", ACTIVITY_STREAMS_NAMESPACE],
   ORIGIN: ["origin", ACTIVITY_STREAMS_NAMESPACE],
@@ -42,7 +42,7 @@ const Properties = {
  *
  * Note that COAR Notify also has its own custom types defined elsewhere.
  */
-const ActivityStreamsTypes = {
+export const ActivityStreamsTypes = {
   // Activities
   ACCEPT: "Accept",
   ANNOUNCE: "Announce",
@@ -84,7 +84,7 @@ const ActivityStreamsTypes = {
 /**
  * The sub-list of ActivityStreams types that are also objects in AS 2.0
  */
-const ACTIVITY_STREAMS_OBJECTS = [
+export const ACTIVITY_STREAMS_OBJECTS = [
   ActivityStreamsTypes.ACTIVITY,
   ActivityStreamsTypes.APPLICATION,
   ActivityStreamsTypes.ARTICLE,
@@ -115,7 +115,7 @@ const ACTIVITY_STREAMS_OBJECTS = [
 /**
  * A simple wrapper around an ActivityStreams dictionary object
  */
-class ActivityStream {
+export class ActivityStream {
   /**
    * Construct a new ActivityStream object
    * @param {Object} raw - the raw ActivityStreams object, as a dictionary
@@ -218,11 +218,3 @@ class ActivityStream {
     };
   }
 }
-
-module.exports = {
-  ACTIVITY_STREAMS_NAMESPACE,
-  Properties,
-  ActivityStreamsTypes,
-  ACTIVITY_STREAMS_OBJECTS,
-  ActivityStream,
-};
