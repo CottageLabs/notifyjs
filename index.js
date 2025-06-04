@@ -1,26 +1,26 @@
-const { COARNotifyClient } = require('./client');
-const { COARNotifyFactory } = require('./factory');
-const { HttpLayer, RequestsHttpLayer } = require('./http');
-const { COARNotifyReceipt, COARNotifyServiceBinding, COARNotifyServerError, COARNotifyServer } = require('./server');
-const { NotifyPattern, SummaryMixin, NotifyTypes } = require('./core/notify');
-const { ActivityStreamsTypes, Properties } = require('./core/activitystreams2');
-const { ValidationError, NotifyException } = require('./exceptions');
+import { COARNotifyClient } from './client.js';
+import { COARNotifyFactory } from './factory.js';
+import { HttpLayer, RequestsHttpLayer } from './http.js';
+import { COARNotifyReceipt, COARNotifyServiceBinding, COARNotifyServerError, COARNotifyServer } from './server.js';
+import { NotifyPattern, SummaryMixin, NotifyTypes } from './core/notify.js';
+import { ActivityStreamsTypes, Properties } from './core/activitystreams2.js';
+import { ValidationError, NotifyException } from './exceptions.js';
 
-// Export patterns
-const Accept = require('./patterns/accept').Accept;
-const AnnounceEndorsement = require('./patterns/announce_endorsement').AnnounceEndorsement;
-const AnnounceRelationship = require('./patterns/announce_relationship').AnnounceRelationship;
-const AnnounceReview = require('./patterns/announce_review').AnnounceReview;
-const AnnounceServiceResult = require('./patterns/announce_service_result').AnnounceServiceResult;
-const Reject = require('./patterns/reject').Reject;
-const RequestEndorsement = require('./patterns/request_endorsement').RequestEndorsement;
-const RequestReview = require('./patterns/request_review').RequestReview;
-const TentativelyAccept = require('./patterns/tentatively_accept').TentativelyAccept;
-const TentativelyReject = require('./patterns/tentatively_reject').TentativelyReject;
-const UndoOffer = require('./patterns/undo_offer').UndoOffer;
-const UnprocessableNotification = require('./patterns/unprocessable_notification').UnprocessableNotification;
+// Import patterns
+import { Accept } from './patterns/accept.js';
+import { AnnounceEndorsement } from './patterns/announce_endorsement.js';
+import { AnnounceRelationship } from './patterns/announce_relationship.js';
+import { AnnounceReview } from './patterns/announce_review.js';
+import { AnnounceServiceResult } from './patterns/announce_service_result.js';
+import { Reject } from './patterns/reject.js';
+import { RequestEndorsement } from './patterns/request_endorsement.js';
+import { RequestReview } from './patterns/request_review.js';
+import { TentativelyAccept } from './patterns/tentatively_accept.js';
+import { TentativelyReject } from './patterns/tentatively_reject.js';
+import { UndoOffer } from './patterns/undo_offer.js';
+import { UnprocessableNotification } from './patterns/unprocessable_notification.js';
 
-module.exports = {
+export {
   COARNotifyClient,
   COARNotifyFactory,
   HttpLayer,
