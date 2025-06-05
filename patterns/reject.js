@@ -7,7 +7,9 @@ import { NotifyPattern, NestedPatternObjectMixin, SummaryMixin } from '../core/n
 import { ActivityStreamsTypes, Properties } from '../core/activitystreams2.js';
 import { ValidationError } from '../exceptions.js';
 
-export class Reject extends NestedPatternObjectMixin(SummaryMixin(NotifyPattern)) {
+class RejectBase extends NotifyPattern {}
+
+export class Reject extends NestedPatternObjectMixin(SummaryMixin(RejectBase)) {
   static TYPE = ActivityStreamsTypes.REJECT;
 
   validate() {

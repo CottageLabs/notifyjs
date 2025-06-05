@@ -3,7 +3,39 @@
  * https://coar-notify.net/specification/1.0.0/accept/
  */
 
-import { NotifyPattern, NestedPatternObjectMixin } from '../core/notify.js';
+import { NotifyPattern } from '../core/notify.js';
+
+function NestedPatternObjectMixin(Base) {
+  return class extends Base {
+    async getObject() {
+      const o = this.get_property('object');
+      if (o !== null && o !== undefined) {
+        const { COARNotifyFactory } = await import('../factory.js');
+        const nested = COARNotifyFactory.get_by_object(JSON.parse(JSON.stringify(o)), {
+          validate_stream_on_construct: false,
+          validate_properties: this.validate_properties,
+          validators: this.validators,
+          validation_context: null,
+        });
+        if (nested !== null) {
+          return nested;
+        }
+        return new (await import('../core/notify.js')).NotifyObject({
+          stream: JSON.parse(JSON.stringify(o)),
+          validate_stream_on_construct: false,
+          validate_properties: this.validate_properties,
+          validators: this.validators,
+          validation_context: 'object',
+        });
+      }
+      return null;
+    }
+
+    set object(value) {
+      this.set_property('object', value.doc);
+    }
+  };
+}
 import { ActivityStreamsTypes, Properties } from '../core/activitystreams2.js';
 import { ValidationError } from '../exceptions.js';
 

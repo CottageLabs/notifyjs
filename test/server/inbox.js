@@ -3,24 +3,37 @@
  * solution in one place.
  */
 
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
-const uuid = require('uuid');
-const bodyParser = require('body-parser');
-const { COARNotifyServer, COARNotifyServiceBinding, COARNotifyReceipt, COARNotifyServerError } = require('../../server');
-const { NotifyPattern } = require('../../core/notify');
+import express from "express";
+import fs from "fs";
+import path from "path";
+import { v4 as uuidv4 } from "uuid";
+import bodyParser from "body-parser";
+import {
+  COARNotifyServer,
+  COARNotifyServiceBinding,
+  COARNotifyReceipt,
+  COARNotifyServerError,
+} from "../../server.js";
+
+function NestedPatternObjectMixin(Base) {
+  return class extends Base {
+    constructor(...args) {
+      super(...args);
+    }
+  };
+}
+import { NotifyPattern } from "../../core/notify.js";
 
 const app = express();
 app.use(bodyParser.json());
 
 const config = {
-  STORE_DIR: process.env.STORE_DIR || './store',
+  STORE_DIR: process.env.STORE_DIR || "./store",
   RESPONSE_STATUS: COARNotifyReceipt.CREATED,
   VALIDATE_INCOMING: true,
-  HOST: process.env.HOST || 'localhost',
+  HOST: process.env.HOST || "localhost",
   PORT: process.env.PORT || 5005,
-  DEBUG: process.env.DEBUG === 'true' || false,
+  DEBUG: process.env.DEBUG === "true" || false,
 };
 
 class COARNotifyServiceTestImpl extends COARNotifyServiceBinding {
@@ -35,45 +48,59 @@ class COARNotifyServiceTestImpl extends COARNotifyServiceBinding {
   notification_received(notification) {
     const store = config.STORE_DIR;
     if (!fs.existsSync(store)) {
-      console.error(`Store directory ${store} does not exist, you must create it manually`);
-      throw new COARNotifyServerError(500, 'Store directory does not exist');
+      console.error(
+        `Store directory ${store} does not exist, you must create it manually`
+      );
+      throw new COARNotifyServerError(500, "Store directory does not exist");
     }
 
-    const now = new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 15);
-    const fn = `${now}_${uuid.v4().replace(/-/g, '')}`;
+    const now = new Date()
+      .toISOString()
+      .replace(/[-:.TZ]/g, "")
+      .slice(0, 15);
+    const fn = `${now}_${uuidv4().replace(/-/g, "")}`;
 
-    fs.writeFileSync(path.join(store, `${fn}.json`), JSON.stringify(notification.to_jsonld()));
+    fs.writeFileSync(
+      path.join(store, `${fn}.json`),
+      JSON.stringify(notification.to_jsonld())
+    );
 
     const rstatus = config.RESPONSE_STATUS;
-    const location = `${app.get('urlRoot') || `http://${config.HOST}:${config.PORT}/`}inbox/${fn}`;
+    const location = `${
+      app.get("urlRoot") || `http://${config.HOST}:${config.PORT}/`
+    }inbox/${fn}`;
 
     return new COARNotifyReceipt(rstatus, location);
   }
 }
 
-app.post('/inbox', (req, res) => {
+app.post("/inbox", (req, res) => {
   const notification = req.body;
   const server = new COARNotifyServer(new COARNotifyServiceTestImpl());
 
   try {
-    const result = server.receive(notification, { validate: config.VALIDATE_INCOMING });
+    const result = server.receive(notification, {
+      validate: config.VALIDATE_INCOMING,
+    });
     res.status(result.status);
     if (result.status === COARNotifyReceipt.CREATED) {
-      res.set('Location', result.location);
+      res.set("Location", result.location);
     }
     res.send();
   } catch (e) {
     if (e instanceof COARNotifyServerError) {
       res.status(e.status).send(e.message);
     } else {
-      res.status(500).send('Internal Server Error');
+      res.status(500).send("Internal Server Error");
     }
   }
 });
 
 function run_server(host = config.HOST, port = config.PORT) {
   if (!fs.existsSync(config.STORE_DIR)) {
-    console.error(`Store directory: ${config.STORE_DIR} does not exist, you must create it manually`);
+    console.error(
+      `Store directory: ${config.STORE_DIR} does not exist, you must create it manually`
+    );
     process.exit(1);
   } else {
     console.log(`Store directory: ${config.STORE_DIR}`);
@@ -84,12 +111,8 @@ function run_server(host = config.HOST, port = config.PORT) {
   });
 }
 
-if (require.main === module) {
+if (process.argv[1] === new URL(import.meta.url).pathname) {
   run_server();
 }
 
-module.exports = {
-  app,
-  run_server,
-  COARNotifyServiceTestImpl,
-};
+export { app, run_server, COARNotifyServiceTestImpl };

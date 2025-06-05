@@ -546,42 +546,46 @@ export class NotifyItem extends NotifyPatternPart {
  * Mixins
  */
 
-export class NestedPatternObjectMixin {
-  async getObject() {
-    const o = this.get_property(Properties.OBJECT);
-    if (o !== null && o !== undefined) {
-      const { COARNotifyFactory } = await import('../factory.js');
-      const nested = COARNotifyFactory.get_by_object(_.cloneDeep(o), {
-        validate_stream_on_construct: false,
-        validate_properties: this.validate_properties,
-        validators: this.validators,
-        validation_context: null,
-      });
-      if (nested !== null) {
-        return nested;
+export function NestedPatternObjectMixin(Base) {
+  return class extends Base {
+    async getObject() {
+      const o = this.get_property(Properties.OBJECT);
+      if (o !== null && o !== undefined) {
+        const { COARNotifyFactory } = await import('../factory.js');
+        const nested = COARNotifyFactory.get_by_object(_.cloneDeep(o), {
+          validate_stream_on_construct: false,
+          validate_properties: this.validate_properties,
+          validators: this.validators,
+          validation_context: null,
+        });
+        if (nested !== null) {
+          return nested;
+        }
+        return new NotifyObject({
+          stream: _.cloneDeep(o),
+          validate_stream_on_construct: false,
+          validate_properties: this.validate_properties,
+          validators: this.validators,
+          validation_context: Properties.OBJECT,
+        });
       }
-      return new NotifyObject({
-        stream: _.cloneDeep(o),
-        validate_stream_on_construct: false,
-        validate_properties: this.validate_properties,
-        validators: this.validators,
-        validation_context: Properties.OBJECT,
-      });
+      return null;
     }
-    return null;
-  }
 
-  set object(value) {
-    this.set_property(Properties.OBJECT, value.doc);
-  }
+    set object(value) {
+      this.set_property(Properties.OBJECT, value.doc);
+    }
+  };
 }
 
-export class SummaryMixin {
-  get summary() {
-    return this.get_property(Properties.SUMMARY);
-  }
+export function SummaryMixin(Base) {
+  return class extends Base {
+    get summary() {
+      return this.get_property(Properties.SUMMARY);
+    }
 
-  set summary(summary) {
-    this.set_property(Properties.SUMMARY, summary);
-  }
+    set summary(summary) {
+      this.set_property(Properties.SUMMARY, summary);
+    }
+  };
 }
