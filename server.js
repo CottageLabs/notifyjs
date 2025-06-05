@@ -1,6 +1,6 @@
-const { COARNotifyFactory } = require('./factory');
+import { COARNotifyFactory } from './factory.js';
 
-class COARNotifyReceipt {
+export class COARNotifyReceipt {
   /**
    * An object representing the response from a COAR Notify server.
    *
@@ -33,7 +33,7 @@ class COARNotifyReceipt {
   }
 }
 
-class COARNotifyServiceBinding {
+export class COARNotifyServiceBinding {
   /**
    * Interface for implementing a COAR Notify server binding.
    *
@@ -47,7 +47,7 @@ class COARNotifyServiceBinding {
   }
 }
 
-class COARNotifyServerError extends Error {
+export class COARNotifyServerError extends Error {
   /**
    * An exception class for server errors in the COAR Notify server implementation.
    *
@@ -78,7 +78,7 @@ class COARNotifyServerError extends Error {
   }
 }
 
-class COARNotifyServer {
+export class COARNotifyServer {
   /**
    * The main entrypoint to the COAR Notify server implementation.
    *
@@ -117,10 +117,3 @@ class COARNotifyServer {
     return this._service_impl.notification_received(obj);
   }
 }
-
-module.exports = {
-  COARNotifyReceipt,
-  COARNotifyServiceBinding,
-  COARNotifyServerError,
-  COARNotifyServer,
-};

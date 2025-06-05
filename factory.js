@@ -1,6 +1,6 @@
-const { ActivityStream, Properties } = require('./core/activitystreams2');
-const { NotifyPattern } = require('./core/notify');
-const {
+import { ActivityStream, Properties } from './core/activitystreams2.js';
+import { NotifyPattern } from './core/notify.js';
+import {
   Accept,
   AnnounceEndorsement,
   AnnounceRelationship,
@@ -13,10 +13,10 @@ const {
   TentativelyReject,
   UnprocessableNotification,
   UndoOffer,
-} = require('./patterns');
-const { NotifyException } = require('./exceptions');
+} from './patterns/index.js';
+import { NotifyException } from './exceptions.js';
 
-class COARNotifyFactory {
+export class COARNotifyFactory {
   /**
    * Factory for producing the correct model based on the type or data within a payload
    */
@@ -125,7 +125,3 @@ class COARNotifyFactory {
     this.MODELS.push(model);
   }
 }
-
-module.exports = {
-  COARNotifyFactory,
-};

@@ -3,11 +3,11 @@
  * https://coar-notify.net/specification/1.0.0/announce-endorsement/
  */
 
-const { NotifyPattern, NotifyTypes, NotifyItem, NotifyProperties, NotifyObject } = require('../core/notify');
-const { ActivityStreamsTypes, Properties } = require('../core/activitystreams2');
-const { ValidationError } = require('../exceptions');
+import { NotifyPattern, NotifyTypes, NotifyItem, NotifyProperties, NotifyObject } from '../core/notify.js';
+import { ActivityStreamsTypes, Properties } from '../core/activitystreams2.js';
+import { ValidationError } from '../exceptions.js';
 
-class AnnounceEndorsement extends NotifyPattern {
+export class AnnounceEndorsement extends NotifyPattern {
   static TYPE = [ActivityStreamsTypes.ANNOUNCE, NotifyTypes.ENDORSMENT_ACTION];
 
   get context() {
@@ -40,7 +40,7 @@ class AnnounceEndorsement extends NotifyPattern {
   }
 }
 
-class AnnounceEndorsementContext extends NotifyObject {
+export class AnnounceEndorsementContext extends NotifyObject {
   get item() {
     const i = this.get_property(NotifyProperties.ITEM);
     if (i !== null && i !== undefined) {
@@ -57,7 +57,7 @@ class AnnounceEndorsementContext extends NotifyObject {
   }
 }
 
-class AnnounceEndorsementItem extends NotifyItem {
+export class AnnounceEndorsementItem extends NotifyItem {
   validate() {
     const ve = new ValidationError();
     try {
@@ -73,9 +73,3 @@ class AnnounceEndorsementItem extends NotifyItem {
     return true;
   }
 }
-
-module.exports = {
-  AnnounceEndorsement,
-  AnnounceEndorsementContext,
-  AnnounceEndorsementItem,
-};

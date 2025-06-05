@@ -3,11 +3,11 @@
  * https://coar-notify.net/specification/1.0.0/reject/
  */
 
-const { NotifyPattern, NestedPatternObjectMixin, SummaryMixin } = require('../core/notify');
-const { ActivityStreamsTypes, Properties } = require('../core/activitystreams2');
-const { ValidationError } = require('../exceptions');
+import { NotifyPattern, NestedPatternObjectMixin, SummaryMixin } from '../core/notify.js';
+import { ActivityStreamsTypes, Properties } from '../core/activitystreams2.js';
+import { ValidationError } from '../exceptions.js';
 
-class Reject extends NestedPatternObjectMixin(SummaryMixin(NotifyPattern)) {
+export class Reject extends NestedPatternObjectMixin(SummaryMixin(NotifyPattern)) {
   static TYPE = ActivityStreamsTypes.REJECT;
 
   validate() {
@@ -34,7 +34,3 @@ class Reject extends NestedPatternObjectMixin(SummaryMixin(NotifyPattern)) {
     return true;
   }
 }
-
-module.exports = {
-  Reject,
-};

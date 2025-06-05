@@ -3,11 +3,11 @@
  * https://coar-notify.net/specification/1.0.0/tentative-reject/
  */
 
-const { NotifyPattern, SummaryMixin, NestedPatternObjectMixin } = require('../core/notify');
-const { ActivityStreamsTypes, Properties } = require('../core/activitystreams2');
-const { ValidationError } = require('../exceptions');
+import { NotifyPattern, SummaryMixin, NestedPatternObjectMixin } from '../core/notify.js';
+import { ActivityStreamsTypes, Properties } from '../core/activitystreams2.js';
+import { ValidationError } from '../exceptions.js';
 
-class TentativelyReject extends NestedPatternObjectMixin(SummaryMixin(NotifyPattern)) {
+export class TentativelyReject extends NestedPatternObjectMixin(SummaryMixin(NotifyPattern)) {
   static TYPE = ActivityStreamsTypes.TENTATIVE_REJECT;
 
   validate() {
@@ -34,7 +34,3 @@ class TentativelyReject extends NestedPatternObjectMixin(SummaryMixin(NotifyPatt
     return true;
   }
 }
-
-module.exports = {
-  TentativelyReject,
-};

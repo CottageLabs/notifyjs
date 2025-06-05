@@ -2,7 +2,7 @@
  * HTTP layer interface and default implementation using fetch API
  */
 
-class HttpLayer {
+export class HttpLayer {
   /**
    * Make an HTTP POST request to the supplied URL with the given body data, and headers
    * @param {string} url - the request URL
@@ -27,7 +27,7 @@ class HttpLayer {
   }
 }
 
-class HttpResponse {
+export class HttpResponse {
   /**
    * Get the value of a header from the response
    * @param {string} header_name - the name of the header
@@ -46,7 +46,7 @@ class HttpResponse {
   }
 }
 
-class RequestsHttpResponse extends HttpResponse {
+export class RequestsHttpResponse extends HttpResponse {
   /**
    * Wraps the fetch Response object
    * @param {Response} resp - fetch Response object
@@ -69,7 +69,7 @@ class RequestsHttpResponse extends HttpResponse {
   }
 }
 
-class RequestsHttpLayer extends HttpLayer {
+export class RequestsHttpLayer extends HttpLayer {
   /**
    * Make an HTTP POST request using fetch
    * @param {string} url
@@ -104,10 +104,3 @@ class RequestsHttpLayer extends HttpLayer {
     return new RequestsHttpResponse(resp);
   }
 }
-
-module.exports = {
-  HttpLayer,
-  HttpResponse,
-  RequestsHttpLayer,
-  RequestsHttpResponse,
-};

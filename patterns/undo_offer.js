@@ -3,11 +3,11 @@
  * https://coar-notify.net/specification/1.0.0/undo-offer/
  */
 
-const { NotifyPattern, NestedPatternObjectMixin, SummaryMixin } = require('../core/notify');
-const { ActivityStreamsTypes, Properties } = require('../core/activitystreams2');
-const { ValidationError } = require('../exceptions');
+import { NotifyPattern, NestedPatternObjectMixin, SummaryMixin } from '../core/notify.js';
+import { ActivityStreamsTypes, Properties } from '../core/activitystreams2.js';
+import { ValidationError } from '../exceptions.js';
 
-class UndoOffer extends NestedPatternObjectMixin(SummaryMixin(NotifyPattern)) {
+export class UndoOffer extends NestedPatternObjectMixin(SummaryMixin(NotifyPattern)) {
   static TYPE = ActivityStreamsTypes.UNDO;
 
   validate() {
@@ -34,7 +34,3 @@ class UndoOffer extends NestedPatternObjectMixin(SummaryMixin(NotifyPattern)) {
     return true;
   }
 }
-
-module.exports = {
-  UndoOffer,
-};

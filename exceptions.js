@@ -5,7 +5,7 @@
 /**
  * Base class for all exceptions in the coarnotifyjs library
  */
-class NotifyException extends Error {
+export class NotifyException extends Error {
   constructor(message) {
     super(message);
     this.name = 'NotifyException';
@@ -37,7 +37,7 @@ class NotifyException extends Error {
  *   }
  * }
  */
-class ValidationError extends NotifyException {
+export class ValidationError extends NotifyException {
   constructor(errors = {}) {
     super();
     this.name = 'ValidationError';
@@ -92,8 +92,3 @@ class ValidationError extends NotifyException {
     return JSON.stringify(this._errors);
   }
 }
-
-module.exports = {
-  NotifyException,
-  ValidationError,
-};

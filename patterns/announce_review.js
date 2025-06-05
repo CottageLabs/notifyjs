@@ -3,11 +3,11 @@
  * https://coar-notify.net/specification/1.0.0/announce-review/
  */
 
-const { NotifyPattern, NotifyTypes, NotifyObject, NotifyItem, NotifyProperties } = require('../core/notify');
-const { ActivityStreamsTypes, Properties } = require('../core/activitystreams2');
-const { ValidationError } = require('../exceptions');
+import { NotifyPattern, NotifyTypes, NotifyObject, NotifyItem, NotifyProperties } from '../core/notify.js';
+import { ActivityStreamsTypes, Properties } from '../core/activitystreams2.js';
+import { ValidationError } from '../exceptions.js';
 
-class AnnounceReview extends NotifyPattern {
+export class AnnounceReview extends NotifyPattern {
   static TYPE = [ActivityStreamsTypes.ANNOUNCE, NotifyTypes.REVIEW_ACTION];
 
   get object() {
@@ -55,7 +55,7 @@ class AnnounceReview extends NotifyPattern {
   }
 }
 
-class AnnounceReviewContext extends NotifyObject {
+export class AnnounceReviewContext extends NotifyObject {
   get item() {
     const i = this.get_property(NotifyProperties.ITEM);
     if (i !== null && i !== undefined) {
@@ -72,7 +72,7 @@ class AnnounceReviewContext extends NotifyObject {
   }
 }
 
-class AnnounceReviewItem extends NotifyItem {
+export class AnnounceReviewItem extends NotifyItem {
   validate() {
     const ve = new ValidationError();
     try {
@@ -89,7 +89,7 @@ class AnnounceReviewItem extends NotifyItem {
   }
 }
 
-class AnnounceReviewObject extends NotifyObject {
+export class AnnounceReviewObject extends NotifyObject {
   validate() {
     const ve = new ValidationError();
     try {
@@ -104,10 +104,3 @@ class AnnounceReviewObject extends NotifyObject {
     return true;
   }
 }
-
-module.exports = {
-  AnnounceReview,
-  AnnounceReviewContext,
-  AnnounceReviewItem,
-  AnnounceReviewObject,
-};

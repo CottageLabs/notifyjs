@@ -23,6 +23,8 @@
   "homepage": "https://github.com/CottageLabs/notifyjs#readme",
   "type": "module",
   "devDependencies": {
-    "jest": "^29.0.0"
+    "express": "^5.1.0",
+    "jest": "^29.0.0",
+    "uuid": "^11.1.0"
   }
 }

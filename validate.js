@@ -4,11 +4,11 @@
  * are shared across all objects.
  */
 
-const { URL } = require('url');
+import { URL } from 'url';
 
-const REQUIRED_MESSAGE = "\`{x}\` is a required field";
+export const REQUIRED_MESSAGE = "\`{x}\` is a required field";
 
-class Validator {
+export class Validator {
   /**
    * Create a new validator with the given rules
    * @param {Object} rules - The rules to use for validation
@@ -69,7 +69,7 @@ class Validator {
  * @param {string} uri - The string that claims to be an absolute URI
  * @returns {boolean} true if valid, otherwise throws Error
  */
-function absolute_uri(obj, uri) {
+export function absolute_uri(obj, uri) {
   let parsed;
   try {
     parsed = new URL(uri);
@@ -92,7 +92,7 @@ function absolute_uri(obj, uri) {
  * @param {string} url - The string that claims to be an HTTP URI
  * @returns {boolean} true if valid, otherwise throws Error
  */
-function url(obj, url) {
+export function url(obj, url) {
   absolute_uri(obj, url);
   const parsed = new URL(url);
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
@@ -109,7 +109,7 @@ function url(obj, url) {
  * @param {Array<string>} values - The list of values to choose from
  * @returns {Function} validation function
  */
-function one_of(values) {
+export function one_of(values) {
   return function validate(obj, x) {
     if (!values.includes(x)) {
       throw new Error(`\`${x}\` is not one of the valid values: ${values}`);
@@ -123,7 +123,7 @@ function one_of(values) {
  * @param {Array<string>} values - The list of values to choose from
  * @returns {Function} validation function
  */
-function at_least_one_of(values) {
+export function at_least_one_of(values) {
   return function validate(obj, x) {
     if (!Array.isArray(x)) {
       x = [x];
@@ -142,7 +142,7 @@ function at_least_one_of(values) {
  * @param {string} value - The value that must be present
  * @returns {Function} validation function
  */
-function contains(value) {
+export function contains(value) {
   let values = value;
   if (!Array.isArray(values)) {
     values = [values];
@@ -169,7 +169,7 @@ function contains(value) {
  * @param {*} value - the type being validated
  * @returns {boolean} true if valid, otherwise throws Error
  */
-function type_checker(obj, value) {
+export function type_checker(obj, value) {
   if (obj.ALLOWED_TYPES && obj.ALLOWED_TYPES.length > 0) {
     const validator = one_of(obj.ALLOWED_TYPES);
     validator(obj, value);
@@ -179,14 +179,3 @@ function type_checker(obj, value) {
   }
   return true;
 }
-
-module.exports = {
-  Validator,
-  absolute_uri,
-  url,
-  one_of,
-  at_least_one_of,
-  contains,
-  type_checker,
-  REQUIRED_MESSAGE,
-};

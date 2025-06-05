@@ -3,11 +3,11 @@
  * https://coar-notify.net/specification/1.0.0/request-review/
  */
 
-const { NotifyPattern, NotifyTypes, NotifyObject, NotifyItem, NotifyProperties } = require('../core/notify');
-const { ActivityStreamsTypes, Properties } = require('../core/activitystreams2');
-const { ValidationError } = require('../exceptions');
+import { NotifyPattern, NotifyTypes, NotifyObject, NotifyItem, NotifyProperties } from '../core/notify.js';
+import { ActivityStreamsTypes, Properties } from '../core/activitystreams2.js';
+import { ValidationError } from '../exceptions.js';
 
-class RequestReview extends NotifyPattern {
+export class RequestReview extends NotifyPattern {
   static TYPE = [ActivityStreamsTypes.OFFER, NotifyTypes.REVIEW_ACTION];
 
   get object() {
@@ -26,7 +26,7 @@ class RequestReview extends NotifyPattern {
   }
 }
 
-class RequestReviewObject extends NotifyObject {
+export class RequestReviewObject extends NotifyObject {
   get item() {
     const i = this.get_property(NotifyProperties.ITEM);
     if (i !== null && i !== undefined) {
@@ -43,7 +43,7 @@ class RequestReviewObject extends NotifyObject {
   }
 }
 
-class RequestReviewItem extends NotifyItem {
+export class RequestReviewItem extends NotifyItem {
   validate() {
     const ve = new ValidationError();
     try {
@@ -59,9 +59,3 @@ class RequestReviewItem extends NotifyItem {
     return true;
   }
 }
-
-module.exports = {
-  RequestReview,
-  RequestReviewObject,
-  RequestReviewItem,
-};

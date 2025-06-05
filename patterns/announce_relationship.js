@@ -3,11 +3,11 @@
  * https://coar-notify.net/specification/1.0.0/announce-relationship/
  */
 
-const { NotifyPattern, NotifyTypes, NotifyObject } = require('../core/notify');
-const { ActivityStreamsTypes, Properties } = require('../core/activitystreams2');
-const { ValidationError } = require('../exceptions');
+import { NotifyPattern, NotifyTypes, NotifyObject } from '../core/notify.js';
+import { ActivityStreamsTypes, Properties } from '../core/activitystreams2.js';
+import { ValidationError } from '../exceptions.js';
 
-class AnnounceRelationship extends NotifyPattern {
+export class AnnounceRelationship extends NotifyPattern {
   static TYPE = [ActivityStreamsTypes.ANNOUNCE, NotifyTypes.RELATIONSHIP_ACTION];
 
   get object() {
@@ -40,7 +40,7 @@ class AnnounceRelationship extends NotifyPattern {
   }
 }
 
-class AnnounceRelationshipObject extends NotifyObject {
+export class AnnounceRelationshipObject extends NotifyObject {
   validate() {
     const ve = new ValidationError();
     try {
@@ -61,8 +61,3 @@ class AnnounceRelationshipObject extends NotifyObject {
     return true;
   }
 }
-
-module.exports = {
-  AnnounceRelationship,
-  AnnounceRelationshipObject,
-};

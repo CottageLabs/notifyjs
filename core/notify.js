@@ -3,7 +3,7 @@
  */
 
 import { ActivityStream, Properties, ActivityStreamsTypes, ACTIVITY_STREAMS_OBJECTS } from './activitystreams2.js';
-import validate from '../validate.js';
+import * as validate from '../validate.js';
 import { ValidationError } from '../exceptions.js';
 import { v4 as uuidv4 } from 'uuid';
 import _ from 'lodash';
@@ -547,7 +547,7 @@ export class NotifyItem extends NotifyPatternPart {
  */
 
 export class NestedPatternObjectMixin {
-  get object() {
+  async getObject() {
     const o = this.get_property(Properties.OBJECT);
     if (o !== null && o !== undefined) {
       const { COARNotifyFactory } = await import('../factory.js');
@@ -584,3 +584,4 @@ export class SummaryMixin {
   set summary(summary) {
     this.set_property(Properties.SUMMARY, summary);
   }
+}

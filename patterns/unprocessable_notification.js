@@ -1,8 +1,8 @@
-const { NotifyPattern, SummaryMixin, NotifyTypes } = require('../core/notify');
-const { ActivityStreamsTypes, Properties } = require('../core/activitystreams2');
-const { ValidationError } = require('../exceptions');
+import { NotifyPattern, SummaryMixin, NotifyTypes } from '../core/notify.js';
+import { ActivityStreamsTypes, Properties } from '../core/activitystreams2.js';
+import { ValidationError } from '../exceptions.js';
 
-class UnprocessableNotification extends NotifyPattern {
+export class UnprocessableNotification extends NotifyPattern {
   /**
    * Class to represent the Unprocessable Notification notification
    */
@@ -27,14 +27,10 @@ class UnprocessableNotification extends NotifyPattern {
     this.required_and_validate(ve, Properties.IN_REPLY_TO, this.in_reply_to);
     this.required(ve, Properties.SUMMARY, this.summary);
 
-    if (ve.has_errors()) {
+    if (ve.hasErrors()) {
       throw ve;
     }
 
     return true;
   }
 }
-
-module.exports = {
-  UnprocessableNotification,
-};

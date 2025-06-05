@@ -3,11 +3,11 @@
  * https://coar-notify.net/specification/1.0.0/request-endorsement/
  */
 
-const { NotifyPattern, NotifyTypes, NotifyItem, NotifyProperties, NotifyObject } = require('../core/notify');
-const { ActivityStreamsTypes, Properties } = require('../core/activitystreams2');
-const { ValidationError } = require('../exceptions');
+import { NotifyPattern, NotifyTypes, NotifyItem, NotifyProperties, NotifyObject } from '../core/notify.js';
+import { ActivityStreamsTypes, Properties } from '../core/activitystreams2.js';
+import { ValidationError } from '../exceptions.js';
 
-class RequestEndorsement extends NotifyPattern {
+export class RequestEndorsement extends NotifyPattern {
   static TYPE = [ActivityStreamsTypes.OFFER, NotifyTypes.ENDORSMENT_ACTION];
 
   get object() {
@@ -26,7 +26,7 @@ class RequestEndorsement extends NotifyPattern {
   }
 }
 
-class RequestEndorsementObject extends NotifyObject {
+export class RequestEndorsementObject extends NotifyObject {
   get item() {
     const i = this.get_property(NotifyProperties.ITEM);
     if (i !== null && i !== undefined) {
@@ -43,7 +43,7 @@ class RequestEndorsementObject extends NotifyObject {
   }
 }
 
-class RequestEndorsementItem extends NotifyItem {
+export class RequestEndorsementItem extends NotifyItem {
   validate() {
     const ve = new ValidationError();
     try {
@@ -59,9 +59,3 @@ class RequestEndorsementItem extends NotifyItem {
     return true;
   }
 }
-
-module.exports = {
-  RequestEndorsement,
-  RequestEndorsementObject,
-  RequestEndorsementItem,
-};
