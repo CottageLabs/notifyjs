@@ -1,14 +1,14 @@
-const assert = require('assert');
+import { describe, it, expect } from 'vitest';
 
 describe('Accept Patterns', () => {
     it('should accept valid patterns', () => {
         const validPattern = 'someValidPattern';
-        assert.strictEqual(isValidPattern(validPattern), true);
+        expect(isValidPattern(validPattern)).toBe(true);
     });
 
     it('should reject invalid patterns', () => {
         const invalidPattern = 'someInvalidPattern';
-        assert.strictEqual(isValidPattern(invalidPattern), false);
+        expect(isValidPattern(invalidPattern)).toBe(false);
     });
 });
 
