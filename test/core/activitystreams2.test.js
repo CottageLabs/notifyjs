@@ -35,9 +35,9 @@ describe("ActivityStream", () => {
     expect(as2.context).toContain(Properties.ID[1]);
 
     // Multiple namespaces
-    as2.set_property(["object", "http://example.com"], "object_value");
+    as2.set_property(["object", "http://localhost:5005"], "object_value");
     expect(as2.doc["object"]).toBe("object_value");
-    expect(as2.context).toContain("http://example.com");
+    expect(as2.context).toContain("http://localhost:5005");
 
     // FOAF namespace
     as2.set_property(
@@ -52,7 +52,7 @@ describe("ActivityStream", () => {
     const as2 = new ActivityStream();
     as2.set_property("random", "value");
     as2.set_property(Properties.ID, "id_value");
-    as2.set_property(["object", "http://example.com"], "object_value");
+    as2.set_property(["object", "http://localhost:5005"], "object_value");
     as2.set_property(
       ["foaf:name", ["foaf", "http://xmlns.com/foaf/0.1/"]],
       "name_value"
@@ -60,7 +60,7 @@ describe("ActivityStream", () => {
 
     expect(as2.get_property("random")).toBe("value");
     expect(as2.get_property(Properties.ID)).toBe("id_value");
-    expect(as2.get_property(["object", "http://example.com"])).toBe(
+    expect(as2.get_property(["object", "http://localhost:5005"])).toBe(
       "object_value"
     );
     expect(as2.get_property("object")).toBe("object_value");
@@ -74,7 +74,7 @@ describe("ActivityStream", () => {
     const as2 = new ActivityStream();
     as2.set_property("random", "value");
     as2.set_property(Properties.ID, "id_value");
-    as2.set_property(["object", "http://example.com"], "object_value");
+    as2.set_property(["object", "http://localhost:5005"], "object_value");
     as2.set_property(
       ["foaf:name", ["foaf", "http://xmlns.com/foaf/0.1/"]],
       "name_value"
@@ -83,7 +83,7 @@ describe("ActivityStream", () => {
     const expected = {
       "@context": [
         Properties.ID[1],
-        "http://example.com",
+        "http://localhost:5005",
         { foaf: "http://xmlns.com/foaf/0.1/" },
       ],
       random: "value",
