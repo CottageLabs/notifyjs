@@ -2,11 +2,16 @@
  * This module is home to all the core model objects from which the notify patterns extend
  */
 
-import { ActivityStream, Properties, ActivityStreamsTypes, ACTIVITY_STREAMS_OBJECTS } from './activitystreams2.js';
-import * as validate from '../validate.js';
-import { ValidationError } from '../exceptions.js';
-import { v4 as uuidv4 } from 'uuid';
-import _ from 'lodash';
+import {
+  ActivityStream,
+  Properties,
+  ActivityStreamsTypes,
+  ACTIVITY_STREAMS_OBJECTS,
+} from "./activitystreams2.js";
+import * as validate from "../validate.js";
+import { ValidationError } from "../exceptions.js";
+import { v4 as uuidv4 } from "uuid";
+import _ from "lodash";
 
 export const NOTIFY_NAMESPACE = "https://coar-notify.net";
 /**
@@ -113,7 +118,10 @@ export class NotifyBase {
     }
 
     if (!this._stream.get_property(Properties.ID)) {
-      this._stream.set_property(Properties.ID, "urn:uuid:" + uuidv4().replace(/-/g, ""));
+      this._stream.set_property(
+        Properties.ID,
+        "urn:uuid:" + uuidv4().replace(/-/g, "")
+      );
     }
 
     if (validateNow) {
@@ -186,12 +194,20 @@ export class NotifyBase {
     return true;
   }
 
-  validate_property(prop_name, value, force_validate = false, raise_error = true) {
+  validate_property(
+    prop_name,
+    value,
+    force_validate = false,
+    raise_error = true
+  ) {
     if (value === null || value === undefined) {
       return [true, ""];
     }
     if (this.validate_properties || force_validate) {
-      const validator = this.validators.get(prop_name, this._validation_context);
+      const validator = this.validators.get(
+        prop_name,
+        this._validation_context
+      );
       if (validator !== null) {
         try {
           validator(this, value);
@@ -417,7 +433,10 @@ export class NotifyPatternPart extends NotifyBase {
 
   constructor(options = {}) {
     super(options);
-    if (this.constructor.DEFAULT_TYPE !== null && (this.type === null || this.type === undefined)) {
+    if (
+      this.constructor.DEFAULT_TYPE !== null &&
+      (this.type === null || this.type === undefined)
+    ) {
       this.type = this.constructor.DEFAULT_TYPE;
     }
   }
@@ -453,6 +472,8 @@ export class NotifyService extends NotifyPatternPart {
 }
 
 export class NotifyObject extends NotifyPatternPart {
+  static TYPE = ActivityStreamsTypes.OBJECT;
+
   get cite_as() {
     return this.get_property(NotifyProperties.CITE_AS);
   }
@@ -551,7 +572,7 @@ export function NestedPatternObjectMixin(Base) {
     async getObject() {
       const o = this.get_property(Properties.OBJECT);
       if (o !== null && o !== undefined) {
-        const { COARNotifyFactory } = await import('../factory.js');
+        const { COARNotifyFactory } = await import("../factory.js");
         const nested = COARNotifyFactory.get_by_object(_.cloneDeep(o), {
           validate_stream_on_construct: false,
           validate_properties: this.validate_properties,

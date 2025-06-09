@@ -3,41 +3,46 @@
  * https://coar-notify.net/specification/1.0.0/accept/
  */
 
-import { NotifyPattern } from '../core/notify.js';
+import { NotifyPattern } from "../core/notify.js";
 
 function NestedPatternObjectMixin(Base) {
   return class extends Base {
     async getObject() {
-      const o = this.get_property('object');
+      const o = this.get_property("object");
       if (o !== null && o !== undefined) {
-        const { COARNotifyFactory } = await import('../factory.js');
-        const nested = COARNotifyFactory.get_by_object(JSON.parse(JSON.stringify(o)), {
-          validate_stream_on_construct: false,
-          validate_properties: this.validate_properties,
-          validators: this.validators,
-          validation_context: null,
-        });
+        const { COARNotifyFactory } = await import("../factory.js");
+        const nested = COARNotifyFactory.get_by_object(
+          JSON.parse(JSON.stringify(o)),
+          {
+            validate_stream_on_construct: false,
+            validate_properties: this.validate_properties,
+            validators: this.validators,
+            validation_context: null,
+          }
+        );
         if (nested !== null) {
           return nested;
         }
-        return new (await import('../core/notify.js')).NotifyObject({
+        const { NotifyObject } = await import("../core/notify.js");
+        return new NotifyObject({
           stream: JSON.parse(JSON.stringify(o)),
           validate_stream_on_construct: false,
           validate_properties: this.validate_properties,
           validators: this.validators,
-          validation_context: 'object',
+          validation_context: "object",
         });
       }
       return null;
     }
 
     set object(value) {
-      this.set_property('object', value.doc);
+      this.set_property("object", value.doc);
     }
   };
 }
-import { ActivityStreamsTypes, Properties } from '../core/activitystreams2.js';
-import { ValidationError } from '../exceptions.js';
+
+import { ActivityStreamsTypes, Properties } from "../core/activitystreams2.js";
+import { ValidationError } from "../exceptions.js";
 
 export class Accept extends NestedPatternObjectMixin(NotifyPattern) {
   static TYPE = ActivityStreamsTypes.ACCEPT;
@@ -47,17 +52,25 @@ export class Accept extends NestedPatternObjectMixin(NotifyPattern) {
     this._ensure_type_contains(this.constructor.TYPE);
   }
 
-  validate() {
+  async validate() {
     const ve = new ValidationError();
     try {
-      super.validate();
+      await super.validate();
     } catch (superve) {
       Object.assign(ve, superve);
     }
 
+    console.log("Accept.validate: in_reply_to =", this.in_reply_to);
+    const nestedObject = await this.getObject();
+    console.log("Accept.validate: nestedObject =", nestedObject);
+    console.log(
+      "Accept.validate: nestedObject.id =",
+      nestedObject ? nestedObject.id : null
+    );
+
     this.required_and_validate(ve, Properties.IN_REPLY_TO, this.in_reply_to);
 
-    const objid = this.object ? this.object.id : null;
+    const objid = nestedObject ? nestedObject.id : null;
     if (this.in_reply_to !== objid) {
       ve.addError(
         Properties.IN_REPLY_TO,

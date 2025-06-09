@@ -1,5 +1,5 @@
-import { ActivityStream, Properties } from './core/activitystreams2.js';
-import { NotifyPattern } from './core/notify.js';
+import { ActivityStream, Properties } from "./core/activitystreams2.js";
+import { NotifyPattern } from "./core/notify.js";
 import {
   Accept,
   AnnounceEndorsement,
@@ -13,8 +13,9 @@ import {
   TentativelyReject,
   UnprocessableNotification,
   UndoOffer,
-} from './patterns/index.js';
-import { NotifyException } from './exceptions.js';
+} from "./patterns/index.js";
+import { NotifyObject } from "./core/notify.js";
+import { NotifyException } from "./exceptions.js";
 
 export class COARNotifyFactory {
   /**
@@ -34,6 +35,7 @@ export class COARNotifyFactory {
     TentativelyReject,
     UnprocessableNotification,
     UndoOffer,
+    NotifyObject,
   ];
 
   /**
@@ -101,10 +103,14 @@ export class COARNotifyFactory {
 
     const types = stream.get_property(Properties.TYPE);
     if (types === null || types === undefined) {
-      throw new NotifyException('No type found in object');
+      throw new NotifyException("No type found in object");
     }
 
     const klazz = this.get_by_types(types);
+
+    if (klazz === null) {
+      throw new NotifyException(`No model found for type(s): ${types}`);
+    }
 
     const inst = new klazz(data, ...args);
     return inst;
