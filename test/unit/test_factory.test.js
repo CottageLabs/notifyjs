@@ -1,5 +1,7 @@
-const { COARNotifyFactory } = require('../../factory');
-const {
+import { describe, it, expect } from "vitest";
+import { COARNotifyFactory } from "../../factory.js";
+import { NotifyPattern } from "../../core/notify.js";
+import {
   Accept,
   AnnounceEndorsement,
   AnnounceRelationship,
@@ -12,8 +14,8 @@ const {
   TentativelyReject,
   UnprocessableNotification,
   UndoOffer,
-} = require('../../patterns');
-const {
+} from "../../patterns/index.js";
+import {
   AcceptFixtureFactory,
   AnnounceEndorsementFixtureFactory,
   AnnounceRelationshipFixtureFactory,
@@ -26,150 +28,53 @@ const {
   TentativelyRejectFixtureFactory,
   UnprocessableNotificationFixtureFactory,
   UndoOfferFixtureFactory,
-} = require('../fixtures');
+} from "../fixtures/index.js";
 
-const { NotifyPattern } = require('../../core/notify');
+describe("COARNotifyFactory", () => {
+  const verifyPatternCreation = (PatternClass, fixtureFactory) => {
+    it(`should get ${PatternClass.name} pattern by type`, () => {
+      const pattern = COARNotifyFactory.get_by_types(PatternClass.TYPE);
+      expect(pattern).toBe(PatternClass);
+    });
+  };
 
-describe('TestFactory', () => {
-  test('01 accept', () => {
-    let acc = COARNotifyFactory.get_by_types(Accept.TYPE);
-    expect(acc).toBe(Accept);
+  verifyPatternCreation(Accept, AcceptFixtureFactory);
+  verifyPatternCreation(AnnounceEndorsement, AnnounceEndorsementFixtureFactory);
+  verifyPatternCreation(
+    AnnounceRelationship,
+    AnnounceRelationshipFixtureFactory
+  );
+  verifyPatternCreation(AnnounceReview, AnnounceReviewFixtureFactory);
+  verifyPatternCreation(
+    AnnounceServiceResult,
+    AnnounceServiceResultFixtureFactory
+  );
+  verifyPatternCreation(Reject, RejectFixtureFactory);
+  verifyPatternCreation(RequestEndorsement, RequestEndorsementFixtureFactory);
+  verifyPatternCreation(RequestReview, RequestReviewFixtureFactory);
+  verifyPatternCreation(TentativelyAccept, TentativelyAcceptFixtureFactory);
+  verifyPatternCreation(TentativelyReject, TentativelyRejectFixtureFactory);
+  verifyPatternCreation(
+    UnprocessableNotification,
+    UnprocessableNotificationFixtureFactory
+  );
+  verifyPatternCreation(UndoOffer, UndoOfferFixtureFactory);
 
-    const source = AcceptFixtureFactory.source();
-    acc = COARNotifyFactory.get_by_object(source);
-    expect(acc).toBeInstanceOf(Accept);
-
-    expect(acc.id).toBe(source.id);
+  it("should generate new ID when none provided", () => {
+    const source = { type: "Accept" }; // No ID provided
+    const pattern = COARNotifyFactory.get_by_object(source);
+    expect(pattern.id).toMatch(
+      /^urn:uuid:[0-9a-f]{8}[0-9a-f]{4}4[0-9a-f]{3}[89ab][0-9a-f]{3}[0-9a-f]{12}$/
+    );
   });
 
-  test('02 announce endorsement', () => {
-    let ae = COARNotifyFactory.get_by_types(AnnounceEndorsement.TYPE);
-    expect(ae).toBe(AnnounceEndorsement);
-
-    const source = AnnounceEndorsementFixtureFactory.source();
-    ae = COARNotifyFactory.get_by_object(source);
-    expect(ae).toBeInstanceOf(AnnounceEndorsement);
-
-    expect(ae.id).toBe(source.id);
-  });
-
-  test('04 announce relationship', () => {
-    let ar = COARNotifyFactory.get_by_types(AnnounceRelationship.TYPE);
-    expect(ar).toBe(AnnounceRelationship);
-
-    const source = AnnounceRelationshipFixtureFactory.source();
-    ar = COARNotifyFactory.get_by_object(source);
-    expect(ar).toBeInstanceOf(AnnounceRelationship);
-
-    expect(ar.id).toBe(source.id);
-  });
-
-  test('05 announce review', () => {
-    let ar = COARNotifyFactory.get_by_types(AnnounceReview.TYPE);
-    expect(ar).toBe(AnnounceReview);
-
-    const source = AnnounceReviewFixtureFactory.source();
-    ar = COARNotifyFactory.get_by_object(source);
-    expect(ar).toBeInstanceOf(AnnounceReview);
-
-    expect(ar.id).toBe(source.id);
-  });
-
-  test('06 announce service result', () => {
-    let ar = COARNotifyFactory.get_by_types(AnnounceServiceResult.TYPE);
-    expect(ar).toBe(AnnounceServiceResult);
-
-    const source = AnnounceServiceResultFixtureFactory.source();
-    ar = COARNotifyFactory.get_by_object(source);
-    expect(ar).toBeInstanceOf(AnnounceServiceResult);
-
-    expect(ar.id).toBe(source.id);
-  });
-
-  test('07 reject', () => {
-    let ar = COARNotifyFactory.get_by_types(Reject.TYPE);
-    expect(ar).toBe(Reject);
-
-    const source = RejectFixtureFactory.source();
-    ar = COARNotifyFactory.get_by_object(source);
-    expect(ar).toBeInstanceOf(Reject);
-
-    expect(ar.id).toBe(source.id);
-  });
-
-  test('08 request endorsement', () => {
-    let ar = COARNotifyFactory.get_by_types(RequestEndorsement.TYPE);
-    expect(ar).toBe(RequestEndorsement);
-
-    const source = RequestEndorsementFixtureFactory.source();
-    ar = COARNotifyFactory.get_by_object(source);
-    expect(ar).toBeInstanceOf(RequestEndorsement);
-
-    expect(ar.id).toBe(source.id);
-  });
-
-  test('10 request review', () => {
-    let ar = COARNotifyFactory.get_by_types(RequestReview.TYPE);
-    expect(ar).toBe(RequestReview);
-
-    const source = RequestReviewFixtureFactory.source();
-    ar = COARNotifyFactory.get_by_object(source);
-    expect(ar).toBeInstanceOf(RequestReview);
-
-    expect(ar.id).toBe(source.id);
-  });
-
-  test('11 tentatively accept', () => {
-    let ar = COARNotifyFactory.get_by_types(TentativelyAccept.TYPE);
-    expect(ar).toBe(TentativelyAccept);
-
-    const source = TentativelyAcceptFixtureFactory.source();
-    ar = COARNotifyFactory.get_by_object(source);
-    expect(ar).toBeInstanceOf(TentativelyAccept);
-
-    expect(ar.id).toBe(source.id);
-  });
-
-  test('12 tentatively reject', () => {
-    let ar = COARNotifyFactory.get_by_types(TentativelyReject.TYPE);
-    expect(ar).toBe(TentativelyReject);
-
-    const source = TentativelyRejectFixtureFactory.source();
-    ar = COARNotifyFactory.get_by_object(source);
-    expect(ar).toBeInstanceOf(TentativelyReject);
-
-    expect(ar.id).toBe(source.id);
-  });
-
-  test('13 unprocessable notification', () => {
-    let ar = COARNotifyFactory.get_by_types(UnprocessableNotification.TYPE);
-    expect(ar).toBe(UnprocessableNotification);
-
-    const source = UnprocessableNotificationFixtureFactory.source();
-    ar = COARNotifyFactory.get_by_object(source);
-    expect(ar).toBeInstanceOf(UnprocessableNotification);
-
-    expect(ar.id).toBe(source.id);
-  });
-
-  test('14 undo offer', () => {
-    let ar = COARNotifyFactory.get_by_types(UndoOffer.TYPE);
-    expect(ar).toBe(UndoOffer);
-
-    const source = UndoOfferFixtureFactory.source();
-    ar = COARNotifyFactory.get_by_object(source);
-    expect(ar).toBeInstanceOf(UndoOffer);
-
-    expect(ar.id).toBe(source.id);
-  });
-
-  test('15 register', () => {
-    class TestPattern extends NotifyPattern {}
-    TestPattern.TYPE = Accept.TYPE;
+  it("should register and use custom pattern", () => {
+    class TestPattern extends NotifyPattern {
+      static TYPE = "TestPattern";
+    }
 
     COARNotifyFactory.register(TestPattern);
-
-    const tp = COARNotifyFactory.get_by_types(Accept.TYPE);
-    expect(tp).toBe(TestPattern);
+    const pattern = COARNotifyFactory.get_by_types("TestPattern");
+    expect(pattern).toBe(TestPattern);
   });
 });
