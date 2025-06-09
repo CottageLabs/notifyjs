@@ -1,4 +1,4 @@
-export const ANNOUNCE_ENDORSEMENT = {
+export const REQUEST_ENDORSEMENT = {
   "@context": [
     "https://www.w3.org/ns/activitystreams",
     "https://coar-notify.net",
@@ -28,19 +28,19 @@ export const ANNOUNCE_ENDORSEMENT = {
     inbox: "https://research-organisation.org/inbox/",
     type: "Service",
   },
-  type: ["Announce", "coar-notify:EndorsementAction"],
+  type: ["Offer", "coar-notify:EndorsementAction"],
 };
 
-export class AnnounceEndorsementFixtureFactory {
+export class RequestEndorsementFixtureFactory {
   static source(copy = true) {
     return copy
-      ? JSON.parse(JSON.stringify(ANNOUNCE_ENDORSEMENT))
-      : ANNOUNCE_ENDORSEMENT;
+      ? JSON.parse(JSON.stringify(REQUEST_ENDORSEMENT))
+      : REQUEST_ENDORSEMENT;
   }
 
   static invalid() {
     const source = this.source();
-    // TODO: Implement invalid modifications similar to Python version
+    // TODO: Implement invalid modifications
     return source;
   }
 }
