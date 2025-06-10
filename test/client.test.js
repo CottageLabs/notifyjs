@@ -1,24 +1,60 @@
-const assert = require('assert');
+import { describe, it, expect } from "vitest";
+import { COARNotifyClient } from "../client.js";
+import { AnnounceEndorsement } from "../patterns/announce_endorsement.js";
+import { ANNOUNCE_ENDORSEMENT } from "../test/fixtures/announce_endorsement.js";
 
-describe('Client Functionality', () => {
-    it('should return the correct response for valid input', () => {
-        const input = 'valid input';
-        const expectedOutput = 'expected output';
-        const actualOutput = clientFunction(input); // Replace with actual function
-        assert.strictEqual(actualOutput, expectedOutput);
-    });
+class MockHttpLayer {
+  constructor({ status_code = 200, location = null } = {}) {
+    this.status_code = status_code;
+    this.location = location;
+  }
 
-    it('should throw an error for invalid input', () => {
-        const input = 'invalid input';
-        assert.throws(() => {
-            clientFunction(input); // Replace with actual function
-        }, Error);
+  send() {
+    return Promise.resolve({
+      statusCode: this.status_code,
+      headers: { location: this.location },
     });
+  }
+}
 
-    it('should handle edge cases correctly', () => {
-        const input = 'edge case input';
-        const expectedOutput = 'edge case expected output';
-        const actualOutput = clientFunction(input); // Replace with actual function
-        assert.strictEqual(actualOutput, expectedOutput);
-    });
+describe("COARNotifyClient", () => {
+  it("should construct with no inbox_url", () => {
+    const client = new COARNotifyClient();
+    expect(client.inbox_url).toBeNull();
+  });
+
+  it("should construct with inbox_url", () => {
+    const client = new COARNotifyClient("http://localhost:5005/inbox");
+    expect(client.inbox_url).toBe("http://localhost:5005/inbox");
+  });
+
+  it("should construct with http_layer", () => {
+    const client = new COARNotifyClient(null, new MockHttpLayer());
+    expect(client).toBeDefined();
+  });
+
+  it("should handle created response", async () => {
+    const client = new COARNotifyClient(
+      "http://localhost:5005/inbox",
+      new MockHttpLayer({
+        status_code: 201,
+        location: "http://localhost:5005/location",
+      })
+    );
+    const ae = new AnnounceEndorsement(ANNOUNCE_ENDORSEMENT);
+    const resp = await client.send(ae);
+    expect(resp.action).toBe(resp.CREATED);
+    expect(resp.location).toBe("http://localhost:5005/location");
+  });
+
+  it("should handle accepted response", async () => {
+    const client = new COARNotifyClient(
+      "http://localhost:5005/inbox",
+      new MockHttpLayer({ status_code: 202 })
+    );
+    const ae = new AnnounceEndorsement(ANNOUNCE_ENDORSEMENT);
+    const resp = await client.send(ae);
+    expect(resp.action).toBe(resp.ACCEPTED);
+    expect(resp.location).toBeNull();
+  });
 });

@@ -1,6 +1,6 @@
-import { NotifyException } from './exceptions.js';
-import { RequestsHttpLayer } from './http.js';
-import { NotifyPattern } from './core/notify.js';
+import { NotifyException, ValidationError } from "./exceptions.js";
+import { RequestsHttpLayer } from "./http.js";
+import { NotifyPattern } from "./core/notify.js";
 
 export class NotifyResponse {
   /**
@@ -13,8 +13,8 @@ export class NotifyResponse {
    * In the event that the resource is created, then there will also be a location
    * URL which will give you access to the resource
    */
-  static CREATED = 'created';
-  static ACCEPTED = 'accepted';
+  static CREATED = "created";
+  static ACCEPTED = "accepted";
 
   /**
    * Construct a new NotifyResponse object with the action (created or accepted) and the location URL (optional)
@@ -78,9 +78,9 @@ export class COARNotifyClient {
    * @param {string|null} inbox_url - The HTTP URI to send the notification to.  Omit if using the default inbox_url supplied in the constructor.
    *                                  If it is omitted, and no value is passed here then we will also look in the ``target.inbox`` property of the notification
    * @param {boolean} validate - Whether to validate the notification before sending.  If you are sure the notification is valid, you can set this to False
-   * @returns {NotifyResponse} a NotifyResponse object representing the response from the server
+   * @returns {Promise<NotifyResponse>} a Promise resolving to a NotifyResponse object representing the response from the server
    */
-  send(notification, inbox_url = null, validate = true) {
+  async send(notification, inbox_url = null, validate = true) {
     if (inbox_url === null) {
       inbox_url = this._inbox_url;
     }
@@ -88,22 +88,32 @@ export class COARNotifyClient {
       inbox_url = notification.target?.inbox;
     }
     if (inbox_url === null) {
-      throw new Error('No inbox URL provided at the client, method, or notification level');
+      throw new Error(
+        "No inbox URL provided at the client, method, or notification level"
+      );
     }
 
     if (validate) {
       if (!notification.validate()) {
-        throw new NotifyException('Attempting to send invalid notification; to override set validate=false when calling this method');
+        throw new NotifyException(
+          "Attempting to send invalid notification; to override set validate=false when calling this method"
+        );
       }
     }
 
-    const resp = this._http.post(inbox_url, {
+    const resp = await this._http.post(inbox_url, {
       data: JSON.stringify(notification.to_jsonld()),
-      headers: { 'Content-Type': 'application/ld+json;profile="https://www.w3.org/ns/activitystreams"' },
+      headers: {
+        "Content-Type":
+          'application/ld+json;profile="https://www.w3.org/ns/activitystreams"',
+      },
     });
 
     if (resp.status_code === 201) {
-      return new NotifyResponse(NotifyResponse.CREATED, resp.header('Location'));
+      return new NotifyResponse(
+        NotifyResponse.CREATED,
+        resp.header("Location")
+      );
     } else if (resp.status_code === 202) {
       return new NotifyResponse(NotifyResponse.ACCEPTED);
     }

@@ -3,9 +3,15 @@
  * https://coar-notify.net/specification/1.0.0/announce-endorsement/
  */
 
-import { NotifyPattern, NotifyTypes, NotifyItem, NotifyProperties, NotifyObject } from '../core/notify.js';
-import { ActivityStreamsTypes, Properties } from '../core/activitystreams2.js';
-import { ValidationError } from '../exceptions.js';
+import {
+  NotifyPattern,
+  NotifyTypes,
+  NotifyItem,
+  NotifyProperties,
+  NotifyObject,
+} from "../core/notify.js";
+import { ActivityStreamsTypes, Properties } from "../core/activitystreams2.js";
+import { ValidationError } from "../exceptions.js";
 
 export class AnnounceEndorsement extends NotifyPattern {
   static TYPE = [ActivityStreamsTypes.ANNOUNCE, NotifyTypes.ENDORSMENT_ACTION];
@@ -26,17 +32,37 @@ export class AnnounceEndorsement extends NotifyPattern {
   }
 
   validate() {
-    const ve = new ValidationError();
     try {
-      super.validate();
-    } catch (superve) {
-      Object.assign(ve, superve);
+      let ve = new ValidationError();
+
+      try {
+        super.validate();
+      } catch (superve) {
+        if (superve instanceof ValidationError) {
+          ve = superve;
+        } else {
+          throw superve;
+        }
+      }
+
+      // Validate context property
+      if (!this.context || !this.context.type) {
+        ve.addError(
+          "context",
+          "`type` is a required field for context and must match validation rules"
+        );
+      } else {
+        this.required_and_validate(ve, Properties.CONTEXT, this.context);
+      }
+
+      if (ve.hasErrors()) {
+        throw ve;
+      }
+      return true;
+    } catch (e) {
+      console.error("Error validating AnnounceEndorsement:", e);
+      throw e;
     }
-    this.required_and_validate(ve, Properties.CONTEXT, this.context);
-    if (ve.hasErrors()) {
-      throw ve;
-    }
-    return true;
   }
 }
 
@@ -59,11 +85,15 @@ export class AnnounceEndorsementContext extends NotifyObject {
 
 export class AnnounceEndorsementItem extends NotifyItem {
   validate() {
-    const ve = new ValidationError();
+    let ve = new ValidationError();
     try {
       super.validate();
     } catch (superve) {
-      Object.assign(ve, superve);
+      if (superve instanceof ValidationError) {
+        ve = superve;
+      } else {
+        throw superve;
+      }
     }
     this.required_and_validate(ve, Properties.TYPE, this.type);
     this.required(ve, NotifyProperties.MEDIA_TYPE, this.media_type);

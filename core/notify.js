@@ -185,12 +185,25 @@ export class NotifyBase {
   }
 
   validate() {
+    console.log("NotifyBase.validate() - Starting validation");
     const ve = new ValidationError();
+    
+    console.log("Validating ID:", this.id);
     this.required_and_validate(ve, Properties.ID, this.id);
+    
+    console.log("Validating TYPE:", this.type);
     this.required_and_validate(ve, Properties.TYPE, this.type);
+    
     if (ve.hasErrors()) {
+      console.error("Validation failed with errors:", {
+        id: this.id,
+        type: this.type, 
+        errors: ve.errors
+      });
       throw ve;
     }
+    
+    console.log("Validation successful");
     return true;
   }
 
@@ -208,10 +221,14 @@ export class NotifyBase {
         prop_name,
         this._validation_context
       );
+      console.log(`Validating property ${prop_name} with value:`, value);
+      console.log(`Validator context: ${this._validation_context}`);
       if (validator !== null) {
         try {
           validator(this, value);
+          console.log(`Validation passed for ${prop_name}`);
         } catch (e) {
+          console.error(`Validation failed for ${prop_name}:`, e.message);
           if (raise_error) {
             throw e;
           } else {
@@ -224,9 +241,21 @@ export class NotifyBase {
   }
 
   _register_property_validation_error(ve, prop_name, value) {
-    const [valid, msg] = this.validate_property(prop_name, value, true, false);
-    if (!valid) {
-      ve.addError(prop_name, msg);
+    try {
+      // Try validation with original prop_name
+      this.validate_property(prop_name, value, true, true);
+    } catch (e1) {
+      // If that fails, try with just the property name (no namespace)
+      if (Array.isArray(prop_name)) {
+        try {
+          this.validate_property(prop_name[0], value, true, true);
+        } catch (e2) {
+          // If both fail, report the original error
+          ve.addError(prop_name, e1.message);
+        }
+      } else {
+        ve.addError(prop_name, e1.message);
+      }
     }
   }
 
@@ -241,17 +270,58 @@ export class NotifyBase {
     if (value === null || value === undefined) {
       const pn = Array.isArray(prop_name) ? prop_name[0] : prop_name;
       ve.addError(prop_name, validate.REQUIRED_MESSAGE.replace("{x}", pn));
-    } else {
-      if (value instanceof NotifyBase) {
-        try {
-          value.validate();
-        } catch (subve) {
-          ve.addNestedErrors(prop_name, subve);
-        }
-      } else {
-        this._register_property_validation_error(ve, prop_name, value);
-      }
+      return;
     }
+
+    // Handle nested NotifyBase objects
+    if (value instanceof NotifyBase) {
+      try {
+        value.validate();
+      } catch (subve) {
+        ve.addNestedErrors(prop_name, subve);
+      }
+      return;
+    }
+
+    // Handle plain objects that should be validated as if they were NotifyBase
+    if (typeof value === 'object' && value !== null) {
+      try {
+        // Create appropriate Notify class based on type
+        let tempObj;
+        if (value[Properties.TYPE[0]] === ActivityStreamsTypes.SERVICE) {
+          tempObj = new NotifyService({
+            stream: value,
+            validate_stream_on_construct: true,
+            validate_properties: this._validate_properties,
+            validators: this._validators,
+            validation_context: prop_name
+          });
+        } else if (value[Properties.TYPE[0]] === ActivityStreamsTypes.OBJECT) {
+          tempObj = new NotifyObject({
+            stream: value,
+            validate_stream_on_construct: true,
+            validate_properties: this._validate_properties,
+            validators: this._validators,
+            validation_context: prop_name
+          });
+        } else {
+          tempObj = new NotifyBase({
+            stream: value,
+            validate_stream_on_construct: true,
+            validate_properties: this._validate_properties,
+            validators: this._validators,
+            validation_context: prop_name
+          });
+        }
+        tempObj.validate();
+      } catch (subve) {
+        ve.addNestedErrors(prop_name, subve);
+      }
+      return;
+    }
+
+    // Standard property validation
+    this._register_property_validation_error(ve, prop_name, value);
   }
 
   optional_and_validate(ve, prop_name, value) {
@@ -407,19 +477,32 @@ export class NotifyPattern extends NotifyBase {
     this.set_property(Properties.CONTEXT, value.doc);
   }
 
-  validate() {
-    const ve = new ValidationError();
+  validate({ skipNestedValidation = false } = {}) {
+    let ve = new ValidationError();
     try {
       super.validate();
     } catch (superve) {
-      Object.assign(ve, superve);
+      if (superve instanceof ValidationError) {
+        ve = superve;
+      } else {
+        throw superve;
+      }
     }
-    this.required_and_validate(ve, Properties.ORIGIN, this.origin);
-    this.required_and_validate(ve, Properties.TARGET, this.target);
-    this.required_and_validate(ve, Properties.OBJECT, this.object);
+
+    if (!skipNestedValidation) {
+      this.required_and_validate(ve, Properties.ORIGIN, this.origin);
+      this.required_and_validate(ve, Properties.TARGET, this.target);
+      this.required_and_validate(ve, Properties.OBJECT, this.object);
+    } else {
+      this.required(ve, Properties.ORIGIN, this.origin);
+      this.required(ve, Properties.TARGET, this.target);
+      this.required(ve, Properties.OBJECT, this.object);
+    }
+
     this.optional_and_validate(ve, Properties.ACTOR, this.actor);
     this.optional_and_validate(ve, Properties.IN_REPLY_TO, this.in_reply_to);
     this.optional_and_validate(ve, Properties.CONTEXT, this.context);
+
     if (ve.hasErrors()) {
       throw ve;
     }
