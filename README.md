@@ -7,7 +7,7 @@ This is the JavaScript implementation of the COAR Notify library, a port of the 
 Install via npm:
 
 ```bash
-npm install coarnotifyjs
+npm i @cottagelabs/coarnotifyjs
 ```
 
 ## Usage
@@ -30,7 +30,7 @@ import {
   ActivityStreamsTypes,
   Properties,
   ValidationError,
-  NotifyException,
+  NotifyException,a
   Accept,
   AnnounceEndorsement,
   AnnounceRelationship,
@@ -43,7 +43,7 @@ import {
   TentativelyReject,
   UndoOffer,
   UnprocessableNotification,
-} from 'coarnotifyjs';
+} from "@cottagelabs/coarnotifyjs";
 ```
 
 ## Testing
