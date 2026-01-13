@@ -1,5 +1,5 @@
 {
-  "name": "coarnotifyjs",
+  "name": "@cottage-labs/coarnotifyjs",
   "version": "0.1.2",
   "description": "This is a coarnotify JS framework",
   "type": "module",
