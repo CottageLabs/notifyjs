@@ -1,33 +1,46 @@
 {
   "name": "coarnotifyjs",
   "version": "1.0.0",
-  "description": "This is an coarnotify js framework",
+  "description": "This is a coarnotify JS framework",
   "main": "index.js",
+  "type": "module",
+
+  "files": [
+    "index.js",
+    "src"
+  ],
+
   "scripts": {
-    "test": "jest"
+    "test": "vitest"
   },
+
   "repository": {
     "type": "git",
     "url": "git+https://github.com/CottageLabs/notifyjs.git"
   },
+
   "keywords": [
     "notifyjs",
     "coarnotifyjs",
     "coarnotify"
   ],
+
   "author": "Kushagra Varade",
   "license": "MIT",
+
   "bugs": {
     "url": "https://github.com/CottageLabs/notifyjs/issues"
   },
+
   "homepage": "https://github.com/CottageLabs/notifyjs#readme",
-  "type": "module",
-  "devDependencies": {
+
+  "dependencies": {
     "express": "^5.1.0",
-    "jest": "^29.0.0",
-    "loadash": "^1.0.0",
     "lodash": "^4.17.21",
-    "uuid": "^11.1.0",
+    "uuid": "^11.1.0"
+  },
+
+  "devDependencies": {
     "vitest": "^3.2.1"
   }
 }
