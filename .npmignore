@@ -1,0 +1,9 @@
+test
+tests
+coverage
+.vitest
+.mocharc.js
+vitest.config.js
+TESTING.md
+.git
+.github

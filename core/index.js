@@ -1,2 +1,10 @@
-export * from "./activitystreams2.js";
-export * from "./notify.js";
+export {
+  NotifyPattern,
+  SummaryMixin,
+  NotifyTypes
+} from './notify.js';
+
+export {
+  ActivityStreamsTypes,
+  Properties
+} from './activitystreams2.js';
