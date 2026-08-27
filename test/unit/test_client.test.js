@@ -1,40 +1,48 @@
-const { COARNotifyClient } = require('../../client');
-const { AnnounceEndorsement } = require('../../patterns/announce_endorsement');
-const { AnnounceEndorsementFixtureFactory } = require('../fixtures/announce_endorsement');
-const { MockHttpLayer } = require('../mocks/http');
+import { describe, it, expect } from "vitest";
+import { COARNotifyClient } from "../../client.js";
+import { AnnounceEndorsement } from "../../patterns/announce_endorsement.js";
+import { AnnounceEndorsementFixtureFactory } from "../fixtures/announce_endorsement.js";
+import { MockHttpLayer } from "../mocks/http.js";
 
-describe('TestClient', () => {
-  test('01 construction', () => {
+function announceEndorsement() {
+  return new AnnounceEndorsement({
+    stream: AnnounceEndorsementFixtureFactory.source(),
+    validate_stream_on_construct: false,
+  });
+}
+
+describe("COARNotifyClient", () => {
+  it("construction", () => {
     let client = new COARNotifyClient();
     expect(client.inbox_url).toBeNull();
 
-    client = new COARNotifyClient('http://example.com/inbox');
-    expect(client.inbox_url).toBe('http://example.com/inbox');
+    client = new COARNotifyClient("http://example.com/inbox");
+    expect(client.inbox_url).toBe("http://example.com/inbox");
 
     client = new COARNotifyClient(null, new MockHttpLayer());
-    client = new COARNotifyClient('http://example.com/inbox', new MockHttpLayer());
+    expect(client.inbox_url).toBeNull();
+
+    client = new COARNotifyClient("http://example.com/inbox", new MockHttpLayer());
+    expect(client.inbox_url).toBe("http://example.com/inbox");
   });
 
-  test('02 created response', () => {
-    const client = new COARNotifyClient('http://example.com/inbox', new MockHttpLayer({
-      status_code: 201,
-      location: 'http://example.com/location',
-    }));
-    const source = AnnounceEndorsementFixtureFactory.source();
-    const ae = new AnnounceEndorsement(source);
-    const resp = client.send(ae);
-    expect(resp.action).toBe(resp.CREATED);
-    expect(resp.location).toBe('http://example.com/location');
+  it("maps a 201 response to a CREATED result with a location", () => {
+    const client = new COARNotifyClient(
+      "http://example.com/inbox",
+      new MockHttpLayer({ status_code: 201, location: "http://example.com/location" })
+    );
+    const resp = client.send(announceEndorsement(), null, false);
+    expect(resp.action).toBe("created");
+    expect(resp.location).toBe("http://example.com/location");
   });
 
-  test('03 accepted response', () => {
-    const client = new COARNotifyClient('http://example.com/inbox', new MockHttpLayer({
-      status_code: 202,
-    }));
-    const source = AnnounceEndorsementFixtureFactory.source();
-    const ae = new AnnounceEndorsement(source);
-    const resp = client.send(ae);
-    expect(resp.action).toBe(resp.ACCEPTED);
+  it("maps a 202 response to an ACCEPTED result with no location", () => {
+    const client = new COARNotifyClient(
+      "http://example.com/inbox",
+      new MockHttpLayer({ status_code: 202 })
+    );
+    const resp = client.send(announceEndorsement(), null, false);
+    expect(resp.action).toBe("accepted");
     expect(resp.location).toBeNull();
   });
 });

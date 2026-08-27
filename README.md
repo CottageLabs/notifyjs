@@ -30,7 +30,7 @@ import {
   ActivityStreamsTypes,
   Properties,
   ValidationError,
-  NotifyException,a
+  NotifyException,
   Accept,
   AnnounceEndorsement,
   AnnounceRelationship,
